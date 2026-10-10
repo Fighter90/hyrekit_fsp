@@ -58,6 +58,8 @@ class CandidateProfile(UUIDMixin, TimestampMixin, Base):
     # ФСП и приватность
     fsp_id: Mapped[str | None] = mapped_column(String(32), index=True)
     fsp_snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    # sub участника у провайдера ФСП ID (FSP-20): есть — ФСП ID подтверждён входом, нет — введён вручную
+    fsp_sub: Mapped[str | None] = mapped_column(String(255), unique=True, index=True)
     privacy: Mapped[dict[str, bool]] = mapped_column(JSON, default=lambda: dict(DEFAULT_PRIVACY))
     consent_given_at: Mapped[datetime | None] = mapped_column(DateTime)
     # Гость экспресс-теста для жюри (FSP-32): сдаёт только экспресс-тест, без кулдауна

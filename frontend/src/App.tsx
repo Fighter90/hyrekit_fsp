@@ -1,4 +1,5 @@
-import { lazy, Suspense, type ReactNode } from 'react'
+import { Suspense, type ReactNode } from 'react'
+import { lazyPage } from './lib/lazyPage'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -10,32 +11,37 @@ import AuthPage from './pages/auth/AuthPage'
 import type { Role } from './api/types'
 
 // Кабинеты грузятся лениво — лендинг остаётся лёгким
-const AppLayout = lazy(() => import('./components/layout/AppLayout'))
-const ExpressPage = lazy(() => import('./pages/auth/ExpressPage'))
-const EmailVerifyPage = lazy(() => import('./pages/auth/EmailVerifyPage'))
-const PrivacyPage = lazy(() => import('./pages/public/PrivacyPage'))
-const TermsPage = lazy(() => import('./pages/public/TermsPage'))
-const NotFoundPage = lazy(() => import('./pages/public/NotFoundPage'))
+const AppLayout = lazyPage(() => import('./components/layout/AppLayout'))
+const ExpressPage = lazyPage(() => import('./pages/auth/ExpressPage'))
+const FspCallbackPage = lazyPage(() => import('./pages/auth/FspCallbackPage'))
+const EmailVerifyPage = lazyPage(() => import('./pages/auth/EmailVerifyPage'))
+const PrivacyPage = lazyPage(() => import('./pages/public/PrivacyPage'))
+const TermsPage = lazyPage(() => import('./pages/public/TermsPage'))
+const NotFoundPage = lazyPage(() => import('./pages/public/NotFoundPage'))
 
-const CandDashboard = lazy(() => import('./pages/candidate/DashboardPage'))
-const CandProfile = lazy(() => import('./pages/candidate/ProfilePage'))
-const CandAssessment = lazy(() => import('./pages/candidate/AssessmentPage'))
-const CandInvitations = lazy(() => import('./pages/candidate/InvitationsPage'))
-const CandVacancies = lazy(() => import('./pages/candidate/VacanciesPage'))
-const CandChallenges = lazy(() => import('./pages/candidate/ChallengesPage'))
-const CandSettings = lazy(() => import('./pages/candidate/SettingsPage'))
+const CandDashboard = lazyPage(() => import('./pages/candidate/DashboardPage'))
+const CandProfile = lazyPage(() => import('./pages/candidate/ProfilePage'))
+const CandAssessment = lazyPage(() => import('./pages/candidate/AssessmentPage'))
+const CandInvitations = lazyPage(() => import('./pages/candidate/InvitationsPage'))
+const CandVacancies = lazyPage(() => import('./pages/candidate/VacanciesPage'))
+const CandChallenges = lazyPage(() => import('./pages/candidate/ChallengesPage'))
+const CandSettings = lazyPage(() => import('./pages/candidate/SettingsPage'))
 
-const EmpDashboard = lazy(() => import('./pages/employer/DashboardPage'))
-const EmpCompany = lazy(() => import('./pages/employer/CompanyPage'))
-const EmpVacancies = lazy(() => import('./pages/employer/VacanciesPage'))
-const EmpVacancyForm = lazy(() => import('./pages/employer/VacancyFormPage'))
-const EmpMatches = lazy(() => import('./pages/employer/MatchesPage'))
-const EmpCandidates = lazy(() => import('./pages/employer/CandidatesPage'))
-const EmpCandidate = lazy(() => import('./pages/employer/CandidateDetailPage'))
-const EmpFavorites = lazy(() => import('./pages/employer/FavoritesPage'))
-const EmpInvitations = lazy(() => import('./pages/employer/InvitationsPage'))
-const EmpChallenges = lazy(() => import('./pages/employer/ChallengesPage'))
-const EmpSettings = lazy(() => import('./pages/employer/SettingsPage'))
+const EmpDashboard = lazyPage(() => import('./pages/employer/DashboardPage'))
+const EmpCompany = lazyPage(() => import('./pages/employer/CompanyPage'))
+const EmpVacancies = lazyPage(() => import('./pages/employer/VacanciesPage'))
+const EmpVacancyForm = lazyPage(() => import('./pages/employer/VacancyFormPage'))
+const EmpMatches = lazyPage(() => import('./pages/employer/MatchesPage'))
+const EmpCandidates = lazyPage(() => import('./pages/employer/CandidatesPage'))
+const EmpCandidate = lazyPage(() => import('./pages/employer/CandidateDetailPage'))
+const EmpFavorites = lazyPage(() => import('./pages/employer/FavoritesPage'))
+const EmpInvitations = lazyPage(() => import('./pages/employer/InvitationsPage'))
+const EmpChallenges = lazyPage(() => import('./pages/employer/ChallengesPage'))
+const EmpSettings = lazyPage(() => import('./pages/employer/SettingsPage'))
+
+const CandArena = lazyPage(() => import('./pages/arena/CandidateArenaPage'))
+const EmpArena = lazyPage(() => import('./pages/arena/EmployerArenaPage'))
+const ArenaRound = lazyPage(() => import('./pages/arena/ArenaRoundPage'))
 
 function FullSpinner() {
   return (
@@ -84,6 +90,7 @@ export default function App() {
           <Route element={<CenteredLayout />}>
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/express" element={<ExpressPage />} />
+            <Route path="/fsp-callback" element={<FspCallbackPage />} />
             <Route path="/verify/:token" element={<EmailVerifyPage />} />
             <Route path="/email-verify" element={<EmailVerifyPage />} />
           </Route>
@@ -102,6 +109,8 @@ export default function App() {
             <Route path="invitations" element={<ByRole candidate={<CandInvitations />} employer={<EmpInvitations />} />} />
             <Route path="challenges" element={<ByRole candidate={<CandChallenges />} employer={<EmpChallenges />} />} />
             <Route path="settings" element={<ByRole candidate={<CandSettings />} employer={<EmpSettings />} />} />
+            <Route path="arena" element={<ByRole candidate={<CandArena />} employer={<EmpArena />} />} />
+            <Route path="arena/:roundId" element={<ArenaRound />} />
 
             <Route path="profile" element={cand(<CandProfile />)} />
             <Route path="assessment" element={cand(<CandAssessment />)} />

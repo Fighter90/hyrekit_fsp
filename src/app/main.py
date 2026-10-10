@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -12,6 +13,8 @@ from fastapi.responses import JSONResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
+from app.arena.router import router as arena_router
+from app.assessment.service import calibration_loop
 from app.auth.router import router as auth_router
 from app.candidates.router import router as candidate_router
 from app.catalog.router import router as catalog_router
@@ -20,6 +23,8 @@ from app.core.exceptions import AppError
 from app.core.limiter import limiter
 from app.core.seed import run as seed_demo
 from app.employers.router import router as employer_router
+from app.fsp import mock_idp, oidc
+from app.fsp.router import router as fsp_router
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +40,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             await seed_demo()
         except Exception:
             logger.warning('Seed skipped (DB may not be ready)', exc_info=True)
+    calibration_task = None
+    if settings.calibration_interval_minutes > 0 and settings.environment not in ('testing', 'test'):
+        calibration_task = asyncio.create_task(calibration_loop(settings.calibration_interval_minutes))
     yield
+    if calibration_task:
+        calibration_task.cancel()
     logger.info('Shutting down HyreKit API...')
 
 
@@ -106,6 +116,10 @@ def create_app() -> FastAPI:
     app.include_router(catalog_router, prefix=api_prefix)
     app.include_router(candidate_router, prefix=api_prefix)
     app.include_router(employer_router, prefix=api_prefix)
+    app.include_router(arena_router, prefix=api_prefix)
+    app.include_router(fsp_router, prefix=api_prefix)
+    if oidc.is_mock():
+        app.include_router(mock_idp.router)  # тестовый провайдер ФСП ID (FSP-20)
 
     # --- Static files: uploads (avatars, etc.) ---
     from pathlib import Path

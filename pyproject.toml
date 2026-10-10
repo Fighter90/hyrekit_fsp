@@ -60,9 +60,17 @@ ignore = [
 # Генерация вариантов заданий и демо-данных детерминирована по зерну — не криптография
 "src/app/assessment/**" = ["S311", "E501"]
 "src/app/fsp/**" = ["S311"]
+# Страница входа тестового провайдера ФСП ID — HTML-шаблон с длинными строками
+"src/app/fsp/mock_idp.py" = ["E501"]
 "src/app/core/seed.py" = ["S311"]
 "scripts/**" = ["S311", "T20"]
 "alembic/**" = ["E501"]
+# Arena: тексты задач и эталоны — длинные строки; песочница сознательно запускает процессы и exec
+"src/app/arena/problems.py" = ["S311", "E501"]
+"src/app/arena/sandbox.py" = ["S606", "T201", "RUF012"]
+"src/app/arena/pyboot.py" = ["S102"]
+"src/app/arena/judge.py" = ["S603", "S103"]
+"tests/test_arena/**" = ["S", "DTZ", "PT018", "E501"]
 
 [tool.ruff.format]
 quote-style = "single"

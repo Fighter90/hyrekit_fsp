@@ -86,6 +86,8 @@ export interface FspSummary {
   achievements: FspAchievement[]
   score: number
   has_history: boolean
+  /** ФСП ID подтверждён входом через ФСП ID, а не введён вручную (FSP-20) */
+  verified?: boolean
 }
 
 export interface Privacy {
@@ -463,4 +465,219 @@ export interface GuestInput {
   specialization: string
   grade: Grade
   consent: boolean
+}
+
+// ── Code Arena ───────────────────────────────────────────────────────────────
+export type ArenaLanguage = 'python' | 'javascript'
+export type ArenaVerdict = 'OK' | 'WA' | 'TLE' | 'MLE' | 'RE' | 'CE'
+
+export interface ArenaProblemRef {
+  code: string
+  title: string
+  level: number
+  level_title: string
+  topic: string
+}
+
+export interface ArenaParticipation {
+  id: string
+  started_at: string
+  ends_at: string
+  finished_at: string | null
+  active: boolean
+  seconds_left: number
+  solved: number
+  penalty: number
+  rating_before: number | null
+  rating_after: number | null
+  rated: boolean
+}
+
+export interface ArenaTask extends ArenaProblemRef {
+  statement: string
+  samples: { input: string; output: string }[]
+  tests_total: number
+}
+
+export interface ArenaTestResult {
+  verdict: ArenaVerdict
+  time_ms: number
+  memory_kb?: number
+  sample: boolean
+  message?: string | null
+  output?: string | null
+}
+
+export interface ArenaFeedback {
+  summary: string
+  points: string[]
+  source: 'rules' | 'gigachat'
+}
+
+export interface ArenaSubmission {
+  id: string
+  problem: string
+  language: ArenaLanguage
+  status: 'queued' | 'running' | 'done' | 'error'
+  verdict: ArenaVerdict | null
+  verdict_title: string | null
+  passed: number
+  total: number
+  time_ms: number | null
+  memory_kb: number | null
+  tests: ArenaTestResult[]
+  message: string | null
+  feedback: ArenaFeedback | null
+  suspicious: boolean
+  minute: number
+  created_at: string
+  code?: string
+}
+
+export interface ArenaRunResult {
+  verdict: ArenaVerdict
+  passed: number
+  total: number
+  time_ms: number
+  memory_kb: number
+  tests: ArenaTestResult[]
+  message: string | null
+}
+
+export interface ArenaRound {
+  id: string
+  title: string
+  description: string | null
+  specialization: string | null
+  specialization_title: string | null
+  starts_at: string
+  ends_at: string | null
+  duration_minutes: number
+  is_open: boolean
+  freeze_minutes: number
+  state: 'upcoming' | 'running' | 'finished'
+  problems: ArenaProblemRef[]
+  sponsor: string | null
+  prize: string | null
+  participants: number
+  participation: ArenaParticipation | null
+  server_time: string
+  mine: boolean
+}
+
+export interface ArenaRoundDetail extends ArenaRound {
+  tasks: ArenaTask[]
+  submissions: ArenaSubmission[]
+  languages: ArenaLanguage[]
+}
+
+export interface ArenaCell {
+  solved: boolean
+  attempts: number
+  minute: number | null
+}
+
+export interface ArenaBoardRow {
+  rank: number
+  participant_id: string
+  profile_id: string | null
+  name: string
+  me: boolean
+  category_title: string | null
+  solved: number
+  penalty: number
+  cells: Record<string, ArenaCell>
+  suspicious: boolean
+  arena_rating: number | null
+  active: boolean
+  invitation_status?: InvitationStatus | null
+}
+
+export interface ArenaBoard {
+  round_id: string
+  problems: ArenaProblemRef[]
+  frozen: boolean
+  frozen_since: string | null
+  rows: ArenaBoardRow[]
+  version: string
+  server_time: string
+}
+
+export interface ArenaEditorialItem extends ArenaProblemRef {
+  statement: string
+  idea: string
+  complexity: string
+  pitfalls: string[]
+  reference: string
+  reference_language: ArenaLanguage
+  tried: number
+  solved: number
+  submissions: number
+  solve_rate: number | null
+}
+
+export interface ArenaRatingInfo {
+  rating: number
+  rd: number
+  provisional: boolean
+  rounds: number
+  solved: number
+  history: { at: string; rating: number; rd: number; round: string; solved: number }[]
+}
+
+export interface ArenaMe {
+  rating: ArenaRatingInfo | null
+  top_percent: number | null
+  participations: (ArenaParticipation & { round_id: string; round: string })[]
+  show_arena: boolean
+  display_name: string
+}
+
+export interface ArenaSandbox {
+  landlock: number
+  seccomp: boolean
+  languages: ArenaLanguage[]
+  language_titles: Record<string, string>
+  limits: { time_ms: number; memory_mb: number; code_kb: number }
+}
+
+export interface ArenaTopItem {
+  candidate: CandidateCard
+  arena: ArenaRatingInfo
+  top_percent: number | null
+}
+
+export interface ArenaCandidate {
+  profile_id: string
+  display_name: string
+  rating: ArenaRatingInfo | null
+  top_percent: number | null
+  solutions_visible: boolean
+  solutions: (ArenaSubmission & { round: string; problem_title: string })[]
+  suspicious_submissions: number
+}
+
+export interface ArenaRoundInput {
+  title: string
+  description?: string
+  specialization?: string | null
+  problems: string[]
+  starts_at: string
+  duration_minutes: number
+  prize?: string
+}
+
+// ── ФСП ID (OIDC, FSP-20) ──
+export type FspFlowMode = 'login' | 'link'
+
+export interface FspConfig {
+  enabled: boolean
+  test_provider: boolean
+}
+
+export interface FspCallbackResult {
+  mode: FspFlowMode
+  fsp_id: string
+  created: boolean
+  tokens: TokenPair | null
 }

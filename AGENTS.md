@@ -16,6 +16,7 @@ cd frontend && npm run dev                       # SPA на :5173
 ruff check src tests scripts && ruff format --check src tests scripts
 pytest --cov=app                                 # бэкенд, порог покрытия 70 %
 PYTHONPATH=src python scripts/validate.py        # валидация методики → docs/validation/results.md
+PYTHONPATH=src python scripts/calibrate.py       # статус семейств заданий и исключение утёкших (FSP-33)
 cd frontend && npm run lint && npm run build && npm test
 docker compose up -d --build                     # весь стек: app, db, redis, mailpit, frontend
 python scripts/smoke.py                          # дымовая проверка поднятого стенда

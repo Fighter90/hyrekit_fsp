@@ -4,6 +4,12 @@
 .auth__tabs { width: 100%; }
 .auth__tabs .tabs__tab { flex: 1; justify-content: center; }
 .auth__switch { text-align: center; }
+.auth__alt { display: flex; flex-direction: column; gap: 10px; }
+.auth__alt:has(> .auth__or:only-child) { display: none; }
+.auth__or { display: flex; align-items: center; gap: 10px; }
+.auth__or::before, .auth__or::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.fsp-verified { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line-strong); }
+.fsp-verified.is-on { color: var(--success); border-color: currentColor; }
 .verify { align-items: center; text-align: center; padding: 40px 30px; }
 
 .role-pick { border: 0; padding: 0; margin: 0; }

@@ -279,7 +279,7 @@ async function scenarioFsp(browser) {
   await step('Согласие на публикацию', () => giveConsent(cand))
   await step('ФСП ID привязан, достижения подтянулись', async () => {
     await cand.getByLabel('ФСП ID').fill(FSP_ID)
-    await cand.getByRole('button', { name: 'Привязать' }).click()
+    await cand.getByRole('button', { name: 'Привязать', exact: true }).click()
     const line = (await cand.getByText(`ФСП ID ${FSP_ID} ·`).textContent()).trim()
     expect(Number(line.match(/· (\d+) достижени/)?.[1]) > 0, `нет достижений: ${line}`)
     await cand.getByText('баллы ФСП', { exact: true }).waitFor()

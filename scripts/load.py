@@ -6,6 +6,14 @@
 
     python scripts/load.py                                  # http://localhost:8000, 50 пользователей, 30 с
     python scripts/load.py --base https://hyrekit.ru --users 20 --duration 60 --out docs/validation/load.md
+
+Режим ``--arena``: N демо-кандидатов входят в открытый раунд Code Arena и одновременно
+отправляют решение задачи. Код решения — эталон варианта участника (нужен ``PYTHONPATH=src``),
+поэтому все отправки должны получить OK. Вход и отправки идут с одного адреса, поэтому стенд
+запускается с выключенными лимитами частоты (``ENVIRONMENT=test``).
+
+    ENVIRONMENT=test scripts/dev.sh                          # в другом терминале
+    PYTHONPATH=src python scripts/load.py --arena --users 50
 """
 
 from __future__ import annotations
@@ -36,13 +44,79 @@ def percentile(values: list[float], p: float) -> float:
     return ordered[k]
 
 
+async def arena(base: str, users: int, problem: str, out: str | None) -> int:
+    from app.arena.problems import variant, variant_seed  # нужен только в этом режиме
+
+    limits = httpx.Limits(max_connections=users, max_keepalive_connections=users)
+    async with httpx.AsyncClient(base_url=base, timeout=300, limits=limits) as c:
+        heads = [await login(c, f'talent{i + 1:02d}@demo.hyrekit.ru') for i in range(users)]
+        rounds = (await c.get('/api/v1/arena/rounds', headers=heads[0])).json()
+        round_id = next(r['id'] for r in rounds if r['is_open'])
+        codes = []
+        for h in heads:
+            profile_id = (await c.get('/api/v1/candidate/profile', headers=h)).json()['id']
+            await c.post(f'/api/v1/arena/rounds/{round_id}/join', headers=h)
+            v = variant(problem, variant_seed(round_id, profile_id, problem))
+            codes.append(v.problem.reference(v.params))
+
+        async def submit(h: dict[str, str], code: str) -> tuple[float, str, int]:
+            t0 = time.perf_counter()
+            r = await c.post(
+                f'/api/v1/arena/rounds/{round_id}/submit',
+                headers=h,
+                json={'problem': problem, 'language': 'python', 'code': code, 'signals': {}},
+            )
+            ms = (time.perf_counter() - t0) * 1000
+            body = r.json() if r.status_code < 500 else {}
+            sub = body.get('submission', {})
+            return ms, sub.get('verdict') or f'HTTP {r.status_code}', int(sub.get('time_ms') or 0)
+
+        started = time.perf_counter()
+        results = await asyncio.gather(*(submit(h, code) for h, code in zip(heads, codes, strict=True)))
+        elapsed = time.perf_counter() - started
+        sandbox = (await c.get('/api/v1/arena/sandbox', headers=heads[0])).json()
+
+    waits = [r[0] for r in results]
+    verdicts: dict[str, int] = defaultdict(int)
+    for _, verdict, _ in results:
+        verdicts[verdict] += 1
+    worst_test = max(r[2] for r in results)
+    lines = [
+        f'## Code Arena: {users} одновременных отправок — {datetime.now(UTC):%Y-%m-%d}',
+        '',
+        f'Стенд `{base}`, открытый раунд, задача `{problem}`, у каждого участника свой вариант, решение — эталон '
+        f'варианта на Python. Песочница: Landlock ABI {sandbox.get("landlock")}, seccomp '
+        f'{"включён" if sandbox.get("seccomp") else "выключен"}, параллельных проверок на процесс — '
+        f'{sandbox.get("max_parallel", "?")}. '
+        f'Команда: `PYTHONPATH=src python scripts/load.py --arena --users {users}`.',
+        '',
+        f'Все {users} отправок проверены за {elapsed:.1f} с. Вердикты: '
+        + ', '.join(f'{k} — {v}' for k, v in sorted(verdicts.items()))
+        + f'. Самый долгий тест внутри песочницы — {worst_test} мс.',
+        '',
+        '| Ожидание ответа на отправку | p50, мс | p95, мс | max, мс |',
+        '| -- | --: | --: | --: |',
+        f'| Отправка → вердикт и разбор | {statistics.median(waits):.0f} | {percentile(waits, 95):.0f} '
+        f'| {max(waits):.0f} |',
+    ]
+    report = '\n'.join(lines) + '\n'
+    print(report)
+    if out:
+        Path(out).write_text(report, encoding='utf-8')
+    return 0 if verdicts.get('OK') == users else 1
+
+
 async def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument('--base', default='http://localhost:8000')
     ap.add_argument('--users', type=int, default=50, help='одновременных пользователей')
     ap.add_argument('--duration', type=int, default=30, help='секунд нагрузки')
     ap.add_argument('--out', help='куда записать отчёт в Markdown')
+    ap.add_argument('--arena', action='store_true', help='одновременные отправки в Code Arena')
+    ap.add_argument('--problem', default='sum-multiples', help='задача для режима --arena')
     args = ap.parse_args()
+    if args.arena:
+        return await arena(args.base, args.users, args.problem, args.out)
 
     limits = httpx.Limits(max_connections=args.users, max_keepalive_connections=args.users)
     async with httpx.AsyncClient(base_url=args.base, timeout=30, limits=limits) as c:
