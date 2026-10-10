@@ -37,6 +37,7 @@ class FspSummary(BaseModel):
     achievements: list[FspAchievement]
     score: int
     has_history: bool
+    verified: bool = False  # ФСП ID подтверждён входом через ФСП ID (FSP-20)
 
 
 class CandidateProfileOut(BaseModel):

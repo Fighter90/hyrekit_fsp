@@ -86,6 +86,8 @@ export interface FspSummary {
   achievements: FspAchievement[]
   score: number
   has_history: boolean
+  /** ФСП ID подтверждён входом через ФСП ID, а не введён вручную (FSP-20) */
+  verified?: boolean
 }
 
 export interface Privacy {
@@ -663,4 +665,19 @@ export interface ArenaRoundInput {
   starts_at: string
   duration_minutes: number
   prize?: string
+}
+
+// ── ФСП ID (OIDC, FSP-20) ──
+export type FspFlowMode = 'login' | 'link'
+
+export interface FspConfig {
+  enabled: boolean
+  test_provider: boolean
+}
+
+export interface FspCallbackResult {
+  mode: FspFlowMode
+  fsp_id: string
+  created: boolean
+  tokens: TokenPair | null
 }

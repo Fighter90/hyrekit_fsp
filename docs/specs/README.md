@@ -7,7 +7,8 @@
 | [Справочник](fsp-21-spravochnik.md) | FSP-21 |
 | [Профиль кандидата, резюме, PDF](fsp-22-23-24-profil-kandidata.md) | FSP-22, FSP-23, FSP-24 |
 | [Приватность и 152-ФЗ](fsp-25-privatnost.md) | FSP-25 |
-| [Достижения ФСП](fsp-26-dostizheniya-fsp.md) | FSP-26, FSP-20 |
+| [Достижения ФСП](fsp-26-dostizheniya-fsp.md) | FSP-26 |
+| [Вход и привязка через ФСП ID (OIDC)](fsp-20-fsp-id-oidc.md) | FSP-20 |
 | [Опрос, банк заданий, тест, грейд](fsp-27-28-29-30-testirovanie.md) | FSP-27 – FSP-31 |
 | [Потребность, подборка, поиск](fsp-43-44-45-podbor.md) | FSP-43, FSP-44, FSP-45 |
 | [Приглашения](fsp-46-priglasheniya.md) | FSP-46 |

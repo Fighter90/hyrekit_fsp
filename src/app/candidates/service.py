@@ -64,7 +64,10 @@ async def get_or_create_profile(session: AsyncSession, user: User) -> CandidateP
 
 
 def fsp_summary(profile: CandidateProfile) -> dict[str, Any] | None:
-    return summarize(profile.fsp_snapshot, profile.specialization) if profile.fsp_snapshot else None
+    if not profile.fsp_snapshot:
+        return None
+    summary = summarize(profile.fsp_snapshot, profile.specialization)
+    return {**summary, 'verified': bool(profile.fsp_sub)} if summary else None
 
 
 def test_component(profile: CandidateProfile) -> float:
