@@ -80,13 +80,16 @@ erDiagram
   companies ||--o{ challenges : ""
   challenges ||--o{ challenge_submissions : ""
   candidate_profiles ||--o{ challenge_submissions : ""
+  candidate_profiles ||--o{ consent_events : ""
+  companies ||--o{ employer_favorites : ""
+  candidate_profiles ||--o{ employer_favorites : ""
 ```
 
-Подробно по полям — [docs/schema.md](../schema.md). Схема создаётся миграцией `alembic/versions/0001_initial_schema.py`.
+Подробно по полям — [docs/schema.md](../schema.md). Схема создаётся миграцией `alembic/versions/0001_initial_schema.py`, журнал согласий и избранное добавляет `0002_consents_favorites.py`.
 
 ## Описание API
 
-Все методы описаны спецификацией OpenAPI, которую генерирует FastAPI: Swagger UI — `/docs`, ReDoc — `/redoc`, JSON — `/openapi.json`. Контракт для фронтенда с типами и кодами ошибок — [docs/spec/api.md](../spec/api.md).
+Все методы описаны спецификацией OpenAPI, которую генерирует FastAPI: Swagger UI — `/docs`, ReDoc — `/redoc`, JSON — `/openapi.json`, копия в репозитории — [docs/openapi.json](../openapi.json) (у каждого метода есть summary, схемы запросов и ответов). Контракт для фронтенда с типами и кодами ошибок — [docs/spec/api.md](../spec/api.md).
 
 | Группа | Префикс | Основные методы |
 | -- | -- | -- |

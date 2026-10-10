@@ -7,6 +7,8 @@ import type {
   AnswerValue,
   ApiErrorBody,
   CandidateCard,
+  ConsentLog,
+  FavoriteItem,
   CandidatePage,
   CandidateProfile,
   CandidateProfileUpdate,
@@ -250,6 +252,9 @@ export class ApiClient {
   getCandidateProfile() {
     return this.request<CandidateProfile>('GET', '/candidate/profile')
   }
+  getConsents() {
+    return this.request<ConsentLog>('GET', '/candidate/consents')
+  }
   updateCandidateProfile(data: CandidateProfileUpdate) {
     return this.request<CandidateProfile>('PUT', '/candidate/profile', { body: data })
   }
@@ -351,6 +356,15 @@ export class ApiClient {
   }
   getCandidate(id: string) {
     return this.request<CandidateCard>('GET', `/employer/candidates/${id}`)
+  }
+  getFavorites(vacancyId?: string) {
+    return this.request<FavoriteItem[]>('GET', `/employer/favorites${buildQuery({ vacancy_id: vacancyId })}`)
+  }
+  addFavorite(profileId: string, data: { vacancy_id?: string | null; note?: string | null } = {}) {
+    return this.request<{ is_favorite: true }>('PUT', `/employer/favorites/${profileId}`, { body: data })
+  }
+  removeFavorite(profileId: string) {
+    return this.request<void>('DELETE', `/employer/favorites/${profileId}`)
   }
   getCategories() {
     return this.request<CategoryStat[]>('GET', '/employer/categories')

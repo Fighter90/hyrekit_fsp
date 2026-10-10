@@ -826,3 +826,6 @@
   .modal { place-items: end center; padding: 0; }
   .modal__panel { border-radius: var(--r-lg) var(--r-lg) 0 0; max-height: 92vh; }
 }
+
+.fav-btn.is-on { color: var(--warning); border-color: rgba(255, 181, 71, 0.5); background: rgba(255, 181, 71, 0.08); }
+.fav-btn:disabled { opacity: 0.6; cursor: progress; }

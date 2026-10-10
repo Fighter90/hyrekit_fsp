@@ -28,6 +28,8 @@ docker compose ps                           # app, db, redis, mailpit, frontend 
 
 Полная проверка стенда одной командой — `python scripts/smoke.py` (нужен `httpx` из `requirements.txt`): 28 шагов сквозного сценария через живой API, включая письмо в Mailpit; для удалённого стенда — `--base https://hyrekit.ru --no-mail`.
 
+Нагрузочная проверка — `python scripts/load.py --users 50 --duration 30`: p50 и p95 подборки, поиска, карточки и кабинета кандидата. Результаты и выводы — [docs/validation/load.md](../validation/load.md).
+
 Остановка: `docker compose down`; с удалением данных — `docker compose down -v`.
 
 ## Вариант 2. Локально без Docker и PostgreSQL

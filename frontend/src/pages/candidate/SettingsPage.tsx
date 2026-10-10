@@ -85,7 +85,27 @@ function ConsentSection({ profile, onChange }: SectionProps) {
       <div className={`visibility mt ${profile.is_visible ? 'is-on' : ''}`}>
         {profile.is_visible ? 'Профиль виден работодателям' : 'Профиль скрыт от работодателей'}
       </div>
+      <ConsentLogView key={profile.consent_given_at ?? 'none'} />
     </section>
+  )
+}
+
+/** Журнал выдачи и отзыва согласия с версией текста — перечитывается при каждом изменении согласия. */
+function ConsentLogView() {
+  const { data } = useAsync(() => api.getConsents())
+  if (!data || data.items.length === 0) return null
+  return (
+    <details className="consent-log mt">
+      <summary className="small">История согласий · текущая редакция от {data.current_version}</summary>
+      <ul className="consent-log__list small">
+        {data.items.map((e) => (
+          <li key={`${e.at}-${e.action}`}>
+            <span className={e.action === 'given' ? 'text-success' : 'text-danger'}>{e.action === 'given' ? 'Дано' : 'Отозвано'}</span>{' '}
+            {formatDateTime(e.at)} · редакция {e.version}
+          </li>
+        ))}
+      </ul>
+    </details>
   )
 }
 

@@ -5,6 +5,13 @@
 ## [Unreleased]
 
 ### Добавлено
+- Журнал согласий кандидата с редакцией текста и экран истории в настройках (FSP-25).
+- Избранное работодателя: закладка в подборке, банке и карточке, страница «Избранное» с фильтром по потребности (FSP-45).
+- `base_total` в ответе подборки — размер до уточняющих фильтров (FSP-45).
+- Миграция `0002_consents_favorites`.
+- Нагрузочная проверка `scripts/load.py` и отчёт `docs/validation/load.md`: p50/p95 ключевых операций при 10 и 50 пользователях (FSP-56).
+- Сопроводительная документация одним файлом: `docs/HyreKit_Documentation.docx` и `.pdf` собираются из `docs/guide/` командой `scripts/build_docs.py`; схемы mermaid рисует `scripts/render_diagrams.cjs` (FSP-57).
+- `docs/openapi.json` и `scripts/export_openapi.py`; CI проверяет, что спецификация совпадает с кодом (FSP-57).
 - Экспресс-тест для жюри без регистрации: страница `/express`, `POST /api/v1/auth/guest`, 5 заданий за 5 минут, гость сразу попадает в подборку работодателя; переменная `GUEST_MODE` (FSP-32).
 - Миграция `0003_express_test` (после `0002_consents_favorites` из FSP-25): `candidate_profiles.is_guest`, `assessment_attempts.mode`.
 
@@ -26,3 +33,5 @@
 - Сопроводительная документация `docs/guide/`, спецификации, ADR 0001–0007, runbook, схема данных.
 - CI: ruff, pytest с покрытием, валидация, сборка и тесты фронтенда.
 - Дымовая проверка развёрнутого стенда `scripts/smoke.py`: 28 шагов сквозного сценария через живой API и Mailpit.
+- Исправлена выкатка в Yandex Cloud: скрипт запуска ВМ идёт в base64 (yc подставлял переменные окружения), A-записи Timeweb правятся на месте, правило SSH получает `SSH_CIDR`; новые `SKIP_BUILD`, `DISK_TYPE`, `DISK_SIZE` (FSP-18, FSP-34).
+- Выкатка в Yandex Cloud одной командой `deploy/yc/deploy.sh`: Container Registry, ВМ с cloud-init без SSH, A-записи в Timeweb, дымовая проверка (FSP-18, FSP-34).

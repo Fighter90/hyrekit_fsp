@@ -15,6 +15,9 @@ erDiagram
   companies ||--o{ challenges : ""
   challenges ||--o{ challenge_submissions : ""
   candidate_profiles ||--o{ challenge_submissions : ""
+  candidate_profiles ||--o{ consent_events : ""
+  companies ||--o{ employer_favorites : ""
+  candidate_profiles ||--o{ employer_favorites : ""
 ```
 
 ## Что где лежит
@@ -29,6 +32,8 @@ erDiagram
 | `invitations` | Приглашение компании кандидату: предложение, вилка, способ связи, статус |
 | `applications` | Отклик кандидата на вакансию и его статус |
 | `challenges`, `challenge_submissions` | Короткие задания и ответы кандидатов с оценкой |
+| `consent_events` | Журнал выдачи и отзыва согласия с редакцией текста |
+| `employer_favorites` | Избранное компании: кандидат, при желании потребность и заметка |
 
 Правильные ответы теста в базе не хранятся: план попытки содержит только семейство, уровень и зерно, ответ вычисляется генератором при проверке.
 
@@ -207,3 +212,28 @@ erDiagram
 | `created_at` | datetime | not null |
 | `updated_at` | datetime | not null |
 
+### `consent_events`
+
+| Поле | Тип | Ограничения |
+| -- | -- | -- |
+| `profile_id` | uuid | FK → candidate_profiles.id, index, not null |
+| `kind` | varchar | not null |
+| `version` | varchar | not null |
+| `action` | varchar | not null |
+| `id` | uuid | PK |
+| `created_at` | datetime | not null |
+| `updated_at` | datetime | not null |
+
+### `employer_favorites`
+
+| Поле | Тип | Ограничения |
+| -- | -- | -- |
+| `company_id` | uuid | FK → companies.id, index, not null |
+| `profile_id` | uuid | FK → candidate_profiles.id, index, not null |
+| `vacancy_id` | uuid | FK → vacancies.id |
+| `note` | varchar |  |
+| `id` | uuid | PK |
+| `created_at` | datetime | not null |
+| `updated_at` | datetime | not null |
+
+Уникальность: одна запись на пару `company_id` + `profile_id`.

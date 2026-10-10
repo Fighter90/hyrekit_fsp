@@ -263,6 +263,27 @@ export interface CandidateCard {
   contacts: { email: string | null; phone: string | null; telegram: string | null } | null
   contacts_unlocked: boolean
   invitation_status: InvitationStatus | null
+  /** Есть в шортлисте компании; приходит в банке, подборке и карточке */
+  is_favorite?: boolean
+}
+
+export interface FavoriteItem {
+  candidate: CandidateCard
+  vacancy_id: string | null
+  note: string | null
+  added_at: string
+}
+
+export interface ConsentEvent {
+  kind: 'publication'
+  version: string
+  action: 'given' | 'revoked'
+  at: string
+}
+
+export interface ConsentLog {
+  current_version: string
+  items: ConsentEvent[]
 }
 
 export interface Invitation {
@@ -382,6 +403,8 @@ export interface MatchItem {
 
 export interface MatchResult {
   vacancy_id: string
+  /** Размер подборки до уточняющих фильтров */
+  base_total: number
   total: number
   categories: CategoryStat[]
   items: MatchItem[]

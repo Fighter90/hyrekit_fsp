@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { MapPin, Gauge, Star } from 'lucide-react'
 import type { CandidateCard } from '../../api/types'
 import { CategoryBadge, FspBadge, StatusChip, Tags } from '../ui/Badges'
+import FavoriteButton from './FavoriteButton'
 import { experienceLabel, formatSalary, workFormatLabel } from '../../lib/format'
 
 interface Props {
@@ -13,10 +14,13 @@ interface Props {
   aside?: ReactNode
   children?: ReactNode
   rank?: number
+  /** Потребность, под которую кандидат попадёт в шортлист */
+  vacancyId?: string
+  onFavoriteChange?: (value: boolean) => void
 }
 
 /** Карточка кандидата для работодателя (банк, подборка). */
-export default function CandidateCardView({ c, highlight = [], missing = [], actions, aside, children, rank }: Props) {
+export default function CandidateCardView({ c, highlight = [], missing = [], actions, aside, children, rank, vacancyId, onFavoriteChange }: Props) {
   return (
     <article className="card card--glow card--hover cand">
       {rank !== undefined && <span className="cand__rank">#{rank}</span>}
@@ -27,6 +31,9 @@ export default function CandidateCardView({ c, highlight = [], missing = [], act
           <div className="muted small">{c.headline ?? 'Заголовок не указан'}</div>
         </div>
         {aside}
+        {c.is_favorite !== undefined && (
+          <FavoriteButton key={c.id} profileId={c.id} initial={c.is_favorite} vacancyId={vacancyId} onChange={onFavoriteChange} />
+        )}
       </div>
       <div className="row wrap gap-sm">
         <CategoryBadge title={c.category_title} grade={c.grade} />

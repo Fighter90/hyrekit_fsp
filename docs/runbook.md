@@ -1,32 +1,44 @@
 # Runbook
 
-## Первая выкатка в Yandex Cloud
+## Выкатка в Yandex Cloud
 
-1. Создать ВМ по параметрам из [deploy/yc/README.md](../deploy/yc/README.md), привязать статический IP, открыть 80 и 443.
-2. Направить A-записи `hyrekit.ru` и `www.hyrekit.ru` на IP.
-3. На ВМ:
+Скрипт `deploy/yc/deploy.sh` собирает образы, кладёт их в Container Registry и создаёт ВМ, которая сама поднимает стек через cloud-init. SSH не нужен.
 
-   ```bash
-   sudo apt-get update && sudo apt-get install -y docker.io docker-compose-v2 git
-   git clone https://github.com/Fighter90/hyrekit_fsp.git && cd hyrekit_fsp
-   cp .env.example .env
-   # в .env: ENVIRONMENT=production, SECRET_KEY=$(openssl rand -hex 32),
-   # POSTGRES_PASSWORD, GIGACHAT_CREDENTIALS, SMTP_* для реальной почты
-   docker compose -f docker-compose.yml -f deploy/yc/docker-compose.yaml up -d --build
-   ```
+Что нужно заранее:
 
-4. Проверить: `curl -s https://hyrekit.ru/health`, вход демо-аккаунтами, письмо подтверждения.
+- сервисный аккаунт с ролями `editor` и `container-registry.admin` в каталоге площадки и его авторизованный ключ (`yc iam key create --service-account-name hyrekit-deploy --output key.json`);
+- токен API Timeweb для зоны `hyrekit.ru`;
+- Docker, `jq`, `curl` и Python с `httpx` на машине, откуда идёт выкатка.
+
+```bash
+export YC_SA_KEY_JSON="$(cat key.json)" TIMEWEB_TOKEN=...
+deploy/yc/deploy.sh                # FOLDER_ID, ZONE, DOMAIN, TAG, SSH_CIDR, SSH_PUBKEY — переопределяются окружением
+```
+
+Скрипт идемпотентен. В конце он ждёт `https://hyrekit.ru/health` и запускает `scripts/smoke.py --no-mail`.
+
+Секреты базы и `SECRET_KEY` генерируются на ВМ при первой загрузке (`/opt/hyrekit/secrets.env`) и не покидают её. Дополнительные переменные (`GIGACHAT_CREDENTIALS`, `SMTP_*`) передаются метаданными ВМ:
+
+```bash
+yc compute instance add-metadata --name hyrekit \
+  --metadata hyrekit-extra-env="$(printf 'GIGACHAT_CREDENTIALS=...\nSMTP_HOST=...\n' | base64 -w0)"
+yc compute instance restart --name hyrekit
+```
 
 ## Обновление
 
+Повторный запуск `deploy/yc/deploy.sh`: новые образы с тегом текущего коммита, тег в метаданных ВМ, перезапуск. Миграции применяются при старте контейнера `app` (`alembic upgrade head`).
+
+Ручной вариант на сервере без реестра:
+
 ```bash
-cd hyrekit_fsp && git pull
+git clone https://github.com/Fighter90/hyrekit_fsp.git && cd hyrekit_fsp && cp .env.example .env
 docker compose -f docker-compose.yml -f deploy/yc/docker-compose.yaml up -d --build
 ```
 
-Миграции применяются при старте контейнера `app` (`alembic upgrade head`).
-
 ## Резервная копия и восстановление базы
+
+На ВМ стек лежит в `/opt/hyrekit`, команды — `docker compose -f compose.prod.yaml --env-file .env ...`.
 
 ```bash
 docker compose exec db pg_dump -U hyrekit hyrekit | gzip > backup-$(date +%F).sql.gz

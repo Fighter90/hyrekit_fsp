@@ -32,6 +32,7 @@ const EmpVacancyForm = lazy(() => import('./pages/employer/VacancyFormPage'))
 const EmpMatches = lazy(() => import('./pages/employer/MatchesPage'))
 const EmpCandidates = lazy(() => import('./pages/employer/CandidatesPage'))
 const EmpCandidate = lazy(() => import('./pages/employer/CandidateDetailPage'))
+const EmpFavorites = lazy(() => import('./pages/employer/FavoritesPage'))
 const EmpInvitations = lazy(() => import('./pages/employer/InvitationsPage'))
 const EmpChallenges = lazy(() => import('./pages/employer/ChallengesPage'))
 const EmpSettings = lazy(() => import('./pages/employer/SettingsPage'))
@@ -111,6 +112,7 @@ export default function App() {
             <Route path="vacancies/:id/matches" element={emp(<EmpMatches />)} />
             <Route path="candidates" element={emp(<EmpCandidates />)} />
             <Route path="candidates/:id" element={emp(<EmpCandidate />)} />
+            <Route path="favorites" element={emp(<EmpFavorites />)} />
             <Route path="*" element={<NotFoundPage inApp />} />
           </Route>
 

@@ -7,7 +7,7 @@
 | Прототип | <https://hyrekit.ru> — площадка в Yandex Cloud готовится к выкатке; до неё прототип поднимается локально одной командой ([Инструкция запуска](#инструкция-запуска)) |
 | Описание API (Swagger) | <https://hyrekit.ru/docs>, локально — <http://localhost:8000/docs> |
 | Репозиторий | <https://github.com/Fighter90/hyrekit_fsp> |
-| Сопроводительная документация | [docs/guide/README.md](docs/guide/README.md) |
+| Сопроводительная документация | [docs/guide/README.md](docs/guide/README.md), одним файлом — [docx](docs/HyreKit_Documentation.docx) и [pdf](docs/HyreKit_Documentation.pdf) |
 
 Платформа-агрегатор ИТ-вакансий с верифицированным профилем достижений участника ФСП. Хакатон Федерации спортивного программирования 2026, команда «Команда 1».
 
@@ -215,6 +215,7 @@ pytest --cov=app                                                         # те�
 PYTHONPATH=src python scripts/validate.py                                # валидация методики
 cd frontend && npm run lint && npm run build && npm test                 # фронтенд
 python scripts/smoke.py                                                  # дымовая проверка поднятого стенда
+python scripts/load.py                                                   # нагрузка: p50/p95 ключевых операций
 docker compose logs -f app                                               # логи API
 ```
 
@@ -258,9 +259,9 @@ flowchart TB
 │   └── main.py
 ├── frontend/           # React SPA: лендинг, кабинеты кандидата и работодателя
 ├── tests/              # pytest: сквозной сценарий, методика, ядро
-├── scripts/            # dev.sh, validate.py, smoke.py
+├── scripts/            # dev.sh, validate.py, smoke.py, load.py, build_docs.py, export_openapi.py
 ├── alembic/            # миграции
-├── deploy/yc/          # площадка Yandex Cloud: compose, Caddy
+├── deploy/yc/          # площадка Yandex Cloud: deploy.sh, cloud-init, compose, Caddy
 ├── docs/
 │   ├── guide/          # сопроводительная документация 1–7
 │   ├── specs/          # спецификации задач FSP-N
@@ -297,6 +298,7 @@ flowchart TB
 | Методика | `tests/test_method/`: каждое семейство на всех уровнях, монотонность θ, правила грейда, подбор, ФСП |
 | Фронтенд | vitest, 21 тест; ESLint; сборка TypeScript |
 | Стенд | `scripts/smoke.py` против поднятого `docker compose`: 28 шагов от регистрации с письмом до раскрытия контактов, отклика и короткого задания |
+| Нагрузка | `scripts/load.py`: 10 пользователей — p95 до 65 мс, 50 пользователей — 0 ошибок; отчёт в [docs/validation/load.md](docs/validation/load.md) |
 | Валидация | `scripts/validate.py`: равная сложность, утечка, повторяемость, дискриминативность, точность грейда, precision@10 и nDCG@10 против базовых способов |
 
 Ключевые результаты валидации:
@@ -326,13 +328,15 @@ GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)) на ка�
 
 ## Развёртывание
 
-Целевая площадка — <https://hyrekit.ru>: ВМ Compute Cloud в Yandex Cloud, Docker Compose из `deploy/yc/`, Caddy с сертификатом Let's Encrypt. Пошагово — [deploy/yc/README.md](deploy/yc/README.md) и [docs/runbook.md](docs/runbook.md).
+Целевая площадка — <https://hyrekit.ru>: ВМ Compute Cloud в Yandex Cloud, Docker Compose из `deploy/yc/`, Caddy с сертификатом Let's Encrypt. Выкатка одной командой — `deploy/yc/deploy.sh` (нужны `YC_SA_KEY_JSON` и `TIMEWEB_TOKEN`). Пошагово — [deploy/yc/README.md](deploy/yc/README.md) и [docs/runbook.md](docs/runbook.md).
 
 ## Документация
 
 | Документ | Что внутри |
 | --- | --- |
 | [docs/guide/](docs/guide/README.md) | Сопроводительная документация для жюри: продукт, сценарий, методика, архитектура, запуск, технологии, команда |
+| [HyreKit_Documentation.docx](docs/HyreKit_Documentation.docx), [.pdf](docs/HyreKit_Documentation.pdf) | Те же разделы одним файлом, сборка — `python scripts/build_docs.py` |
+| [docs/openapi.json](docs/openapi.json) | Спецификация OpenAPI, выгрузка — `PYTHONPATH=src python scripts/export_openapi.py` |
 | [docs/specs/](docs/specs/README.md) | Спецификации задач |
 | [docs/spec/api.md](docs/spec/api.md) | Контракт API |
 | [docs/schema.md](docs/schema.md) | Модель данных |

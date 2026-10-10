@@ -67,6 +67,7 @@ type Grade = 'intern' | 'junior' | 'middle' | 'senior' | 'lead'
 | POST | `/candidate/profile/resume` | `multipart/form-data` `file` (PDF/DOCX) → распознанные поля `ResumeParseResult`, профиль дополняется |
 | GET | `/candidate/profile/pdf` | стандартизированный PDF-профиль (`application/pdf`) |
 | PUT | `/candidate/settings` | приватность, согласие, ФСП ID (`CandidateSettingsUpdate`) |
+| GET | `/candidate/consents` | журнал согласий `{current_version, items: {kind, version, action: 'given'|'revoked', at}[]}`, новые сверху |
 | GET | `/candidate/fsp` | достижения ФСП по привязанному ID (`FspSummary`) |
 
 ```ts
@@ -183,6 +184,9 @@ interface ChallengeSubmission { id: string; challenge_id: string; answer: string
 | GET | `/employer/candidates?specialization=&grade=&category=&stack=&has_fsp=&q=&limit=&offset=` | банк кандидатов `CandidatePage` |
 | GET | `/employer/candidates/{id}` | карточка кандидата `CandidateCard` (контакты скрыты до согласия) |
 | GET | `/employer/categories` | категории с количеством кандидатов `CategoryStat[]` |
+| GET | `/employer/favorites?vacancy_id=` | избранное `{candidate: CandidateCard, vacancy_id, note, added_at}[]`; без отозвавших согласие |
+| PUT | `/employer/favorites/{profile_id}` | `{vacancy_id?, note?}` → добавить или обновить; 404 для невидимого кандидата |
+| DELETE | `/employer/favorites/{profile_id}` | убрать из избранного, 204 |
 | POST | `/employer/invitations` | `InvitationInput` → `Invitation` |
 | GET | `/employer/invitations` | отправленные приглашения со статусами |
 | GET | `/employer/applications` | входящие отклики |
@@ -212,12 +216,13 @@ interface CandidateCard {
   contacts: { email: string | null; phone: string | null; telegram: string | null } | null  // null до принятия
   contacts_unlocked: boolean
   invitation_status: InvitationStatus | null   // последнее приглашение от этой компании
+  is_favorite?: boolean                        // в шортлисте компании (банк, подборка, карточка)
 }
 interface MatchItem { candidate: CandidateCard; score: number /*0..100*/
   breakdown: { category: number; stack: number; test: number; fsp: number; freshness: number }
   reasons: string[]              // объяснимость: «Совпадает категория Backend · Middle», «Есть 4 из 5 технологий: …»
   missing_stack: string[] }
-interface MatchResult { vacancy_id: string; total: number; categories: CategoryStat[]; items: MatchItem[] }
+interface MatchResult { vacancy_id: string; base_total: number /* до фильтров */; total: number; categories: CategoryStat[]; items: MatchItem[] }
 interface CandidatePage { total: number; items: CandidateCard[] }
 interface CategoryStat { category: string; title: string; specialization: string; grade: Grade
   count: number; with_fsp: number }
