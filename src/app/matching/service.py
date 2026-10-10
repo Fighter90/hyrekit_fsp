@@ -12,7 +12,8 @@
   берутся из поля stack и дополнительно извлекаются из текста описания
   (словарь технологий + нормализация синонимов);
 * тест — сила результата относительно порога грейда (sigmoid от θ − cut);
-* ФСП — балл достижений с учётом релевантности дисциплины;
+* ФСП — соревновательный опыт: балл достижений ФСП с учётом релевантности
+  дисциплины или рейтинг Code Arena в шкале 0..100 (берётся больший);
 * актуальность — свежесть активности (регулярные задания, тесты).
 
 Каждый пункт выдачи сопровождается человекочитаемыми причинами (объяснимость).
@@ -101,7 +102,9 @@ def ability_fit(ability: float | None, gmin: str, gmax: str) -> float:
     return 100.0 * math.exp(-(d**2) / (2 * 0.5**2))
 
 
-def score_candidate(profile: CandidateProfile, vacancy: Vacancy, req: list[str]) -> dict[str, Any]:
+def score_candidate(
+    profile: CandidateProfile, vacancy: Vacancy, req: list[str], arena: dict[str, Any] | None = None
+) -> dict[str, Any]:
     have = {norm(t) for t in profile.stack or []}
     need = list(req)
     matched = [t for t in need if norm(t) in have]
@@ -111,7 +114,7 @@ def score_candidate(profile: CandidateProfile, vacancy: Vacancy, req: list[str])
         'category': grade_fit(profile.grade, vacancy.grade_min, vacancy.grade_max),  # type: ignore[arg-type]
         'stack': 100.0 * len(matched) / len(need) if need else 50.0,
         'test': ability_fit(profile.ability, vacancy.grade_min, vacancy.grade_max),
-        'fsp': float(fsp['score']) if fsp else 0.0,
+        'fsp': max(float(fsp['score']) if fsp else 0.0, arena_score(arena)),
         'freshness': freshness(profile),
     }
     total = sum(WEIGHTS[k] * v for k, v in parts.items())
@@ -137,6 +140,13 @@ def score_candidate(profile: CandidateProfile, vacancy: Vacancy, req: list[str])
         if relevant:
             line += f', профильных — {relevant}'
         reasons.append(line)
+    if arena:
+        line = f'Arena: рейтинг {arena["rating"]:.0f}'
+        if arena.get('top_percent'):
+            line += f', топ-{arena["top_percent"]}% специализации'
+        if arena.get('provisional'):
+            line += ' (предварительный)'
+        reasons.append(line)
     if parts['freshness'] >= 100:
         reasons.append('Активен последние 30 дней')
     return {
@@ -145,6 +155,39 @@ def score_candidate(profile: CandidateProfile, vacancy: Vacancy, req: list[str])
         'reasons': reasons,
         'missing_stack': missing,
     }
+
+
+def arena_score(arena: dict[str, Any] | None) -> float:
+    from app.arena.rating import matching_score
+
+    return matching_score(arena['rating'], arena['rd']) if arena else 0.0
+
+
+async def arena_ratings(session: AsyncSession, profiles: list[CandidateProfile]) -> dict[Any, dict[str, Any]]:
+    """Рейтинг Arena и доля «топ-N %» внутри специализации для объяснения выдачи."""
+    from app.arena.models import ArenaRating
+
+    rows = list(
+        (
+            await session.execute(
+                select(ArenaRating, CandidateProfile.specialization).join(
+                    CandidateProfile, CandidateProfile.id == ArenaRating.profile_id
+                )
+            )
+        ).all()
+    )
+    by_spec: dict[Any, list[float]] = {}
+    for rt, spec in rows:
+        by_spec.setdefault(spec, []).append(rt.rating)
+    ids = {p.id for p in profiles}
+    out: dict[Any, dict[str, Any]] = {}
+    for rt, spec in rows:
+        if rt.profile_id not in ids:
+            continue
+        values = by_spec[spec]
+        top = max(1, math.ceil(100 * (sum(1 for v in values if v > rt.rating) + 1) / len(values)))
+        out[rt.profile_id] = {'rating': rt.rating, 'rd': rt.rd, 'provisional': rt.rd > 110, 'top_percent': top}
+    return out
 
 
 def _passes_filters(p: CandidateProfile, grade: str | None, stack: list[str], has_fsp: bool | None) -> bool:
@@ -205,10 +248,11 @@ async def match_vacancy(
         c['with_fsp'] += bool(f and f['has_history'])
 
     items = []
+    arena = await arena_ratings(session, pool)
     for p in pool:
         if not _passes_filters(p, grade, stack or [], has_fsp):
             continue
-        s = score_candidate(p, vacancy, req)
+        s = score_candidate(p, vacancy, req, arena.get(p.id))
         items.append(
             {
                 'candidate': to_card(

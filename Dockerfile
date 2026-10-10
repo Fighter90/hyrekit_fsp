@@ -33,6 +33,9 @@ FROM base AS production
 # Копирование установленных пакетов
 COPY --from=builder /install /usr/local
 
+# Node.js для решений Code Arena на JavaScript (один бинарник, без npm)
+COPY --from=mirror.gcr.io/library/node:20-bookworm-slim /usr/local/bin/node /usr/local/bin/node
+
 # Создание non-root пользователя
 RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser
 
@@ -54,5 +57,6 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
 
-# Запуск
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2 --app-dir src"]
+# Запуск. Адрес клиента берётся из X-Forwarded-For: порт приложения не публикуется,
+# запросы приходят только через Caddy и nginx, поэтому заголовку можно доверять.
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2 --proxy-headers --forwarded-allow-ips '*' --app-dir src"]

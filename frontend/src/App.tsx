@@ -37,6 +37,10 @@ const EmpInvitations = lazy(() => import('./pages/employer/InvitationsPage'))
 const EmpChallenges = lazy(() => import('./pages/employer/ChallengesPage'))
 const EmpSettings = lazy(() => import('./pages/employer/SettingsPage'))
 
+const CandArena = lazy(() => import('./pages/arena/CandidateArenaPage'))
+const EmpArena = lazy(() => import('./pages/arena/EmployerArenaPage'))
+const ArenaRound = lazy(() => import('./pages/arena/ArenaRoundPage'))
+
 function FullSpinner() {
   return (
     <div className="full-center">
@@ -102,6 +106,8 @@ export default function App() {
             <Route path="invitations" element={<ByRole candidate={<CandInvitations />} employer={<EmpInvitations />} />} />
             <Route path="challenges" element={<ByRole candidate={<CandChallenges />} employer={<EmpChallenges />} />} />
             <Route path="settings" element={<ByRole candidate={<CandSettings />} employer={<EmpSettings />} />} />
+            <Route path="arena" element={<ByRole candidate={<CandArena />} employer={<EmpArena />} />} />
+            <Route path="arena/:roundId" element={<ArenaRound />} />
 
             <Route path="profile" element={cand(<CandProfile />)} />
             <Route path="assessment" element={cand(<CandAssessment />)} />

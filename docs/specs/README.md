@@ -16,4 +16,5 @@
 | [Демо-данные](fsp-17-demo-dannye.md) | FSP-17 |
 | [Экспресс-тест для жюри](fsp-32-ekspress-test.md) | FSP-32 |
 | [Честный порог грейда](fsp-61-chestnyj-porog.md) | FSP-61 |
+| [Code Arena: соревнования, автопроверка, рейтинг](fsp-36-code-arena.md) | FSP-36 – FSP-42 |
 | [Валидация](fsp-54-55-validaciya.md) | FSP-54, FSP-55 |

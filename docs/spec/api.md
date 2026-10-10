@@ -233,6 +233,29 @@ interface InvitationInput { candidate_id: string; vacancy_id?: string | null; ti
   salary_from: number; salary_to: number; contact: string }
 ```
 
+## Code Arena `/arena`
+
+Типы — `frontend/src/api/types.ts` (`Arena*`), правила — [fsp-36-code-arena.md](../specs/fsp-36-code-arena.md).
+
+| Метод | Путь | Роль | Описание |
+|---|---|---|---|
+| GET | `/arena/sandbox` | все | слои песочницы `{landlock, seccomp, languages, max_parallel, limits}` |
+| GET | `/arena/problems` | все | банк задач `ArenaProblemRef[]` |
+| GET | `/arena/rounds` | все | раунды `ArenaRound[]`; кандидату — с его участием |
+| GET | `/arena/rounds/{id}` | все | раунд, задачи варианта участника, отправки `ArenaRoundDetail` |
+| POST | `/arena/rounds/{id}/join` | кандидат | участие, запуск личного таймера; 409 до старта и после конца |
+| POST | `/arena/rounds/{id}/run` | кандидат | `{problem, language, code}` → результаты на примерах, не засчитывается; 20 в минуту |
+| POST | `/arena/rounds/{id}/submit` | кандидат | `{problem, language, code, signals}` → `{submission, participation}` с вердиктами тестов и разбором; 10 в минуту; 409 после конца времени |
+| POST | `/arena/rounds/{id}/finish` | кандидат | завершить досрочно, пересчитать рейтинг |
+| GET | `/arena/rounds/{id}/leaderboard` | все | таблица ICPC `ArenaBoard`; у работодателя — статус приглашения |
+| GET | `/arena/rounds/{id}/stream` | все | SSE: событие `board` при изменении таблицы |
+| GET | `/arena/rounds/{id}/editorial` | все | эталоны и статистика; кандидату — после конца его участия, иначе 403 |
+| GET | `/arena/submissions/{id}` | кандидат | своя отправка `ArenaSubmission` |
+| GET/PUT | `/arena/me`, `/arena/me/settings` | кандидат | рейтинг, история, место; `{show_arena}` |
+| POST | `/arena/rounds` | работодатель | `ArenaRoundInput` → раунд компании, 201 |
+| GET | `/arena/top?specialization=&grade=&has_fsp=&min_rating=&limit=` | работодатель | витрина `{total, items: ArenaTopItem[]}` |
+| GET | `/arena/candidates/{profile_id}` | работодатель | рейтинг и решения кандидата (решения — если кандидат открыл показ) |
+
 ## Служебное
 
 | GET | `/health` | `{status: "ok"}` |
