@@ -19,6 +19,7 @@ PYTHONPATH=src python scripts/validate.py        # валидация метод
 cd frontend && npm run lint && npm run build && npm test
 docker compose up -d --build                     # весь стек: app, db, redis, mailpit, frontend
 python scripts/smoke.py                          # дымовая проверка поднятого стенда
+python scripts/load.py                           # нагрузка: p50/p95 ключевых операций
 PYTHONPATH=src python scripts/export_openapi.py  # docs/openapi.json; CI проверяет актуальность
 python scripts/build_docs.py                     # docs/HyreKit_Documentation.docx и .pdf из docs/guide/
 ```

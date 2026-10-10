@@ -9,6 +9,7 @@
 - Избранное работодателя: закладка в подборке, банке и карточке, страница «Избранное» с фильтром по потребности (FSP-45).
 - `base_total` в ответе подборки — размер до уточняющих фильтров (FSP-45).
 - Миграция `0002_consents_favorites`.
+- Нагрузочная проверка `scripts/load.py` и отчёт `docs/validation/load.md`: p50/p95 ключевых операций при 10 и 50 пользователях (FSP-56).
 - Сопроводительная документация одним файлом: `docs/HyreKit_Documentation.docx` и `.pdf` собираются из `docs/guide/` командой `scripts/build_docs.py`; схемы mermaid рисует `scripts/render_diagrams.cjs` (FSP-57).
 - `docs/openapi.json` и `scripts/export_openapi.py`; CI проверяет, что спецификация совпадает с кодом (FSP-57).
 
