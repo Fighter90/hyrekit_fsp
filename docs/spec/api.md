@@ -26,6 +26,9 @@
 | POST | `/auth/register` | `{email, password, full_name, role}` → `{access_token, refresh_token, token_type}` |
 | POST | `/auth/login` | `{email, password}` → токены |
 | POST | `/auth/guest` | `{specialization, grade, consent}` → токены гостевого кандидата экспресс-теста; 404 при `GUEST_MODE=false`, 10 запросов в минуту |
+| GET | `/auth/fsp/config` | `{enabled, test_provider}`: доступен ли вход через ФСП ID (FSP-20) |
+| POST | `/auth/fsp/start` | `{mode: login\|link}` → `{authorize_url}` и HttpOnly-cookie `fsp_oidc` (state, nonce, PKCE, 10 минут); `link` — только вошедший кандидат, иначе 403 |
+| POST | `/auth/fsp/callback` | `{code, state}` → `{mode, fsp_id, created, tokens}`; 400 при чужом state или отказе провайдера, 403 если привязку завершает другой пользователь, 409 если участник ФСП уже подтверждён в другом аккаунте |
 | POST | `/auth/refresh` | `{refresh_token}` → токены |
 | GET | `/auth/verify/{token}` | подтверждение почты; ссылка из письма ведёт на страницу фронтенда `/verify/{token}` |
 | POST | `/auth/resend-verification` | повторная отправка письма |
@@ -232,6 +235,42 @@ interface VacancyAssessment { specialization: string; grade: Grade; grade_level:
 interface InvitationInput { candidate_id: string; vacancy_id?: string | null; title: string; message: string
   salary_from: number; salary_to: number; contact: string }
 ```
+
+## Code Arena `/arena`
+
+Типы — `frontend/src/api/types.ts` (`Arena*`), правила — [fsp-36-code-arena.md](../specs/fsp-36-code-arena.md).
+
+| Метод | Путь | Роль | Описание |
+|---|---|---|---|
+| GET | `/arena/sandbox` | все | слои песочницы `{landlock, seccomp, languages, max_parallel, limits}` |
+| GET | `/arena/problems` | все | банк задач `ArenaProblemRef[]` |
+| GET | `/arena/rounds` | все | раунды `ArenaRound[]`; кандидату — с его участием |
+| GET | `/arena/rounds/{id}` | все | раунд, задачи варианта участника, отправки `ArenaRoundDetail` |
+| POST | `/arena/rounds/{id}/join` | кандидат | участие, запуск личного таймера; 409 до старта и после конца |
+| POST | `/arena/rounds/{id}/run` | кандидат | `{problem, language, code}` → результаты на примерах, не засчитывается; 20 в минуту |
+| POST | `/arena/rounds/{id}/submit` | кандидат | `{problem, language, code, signals}` → `{submission, participation}` с вердиктами тестов и разбором; 10 в минуту; 409 после конца времени |
+| POST | `/arena/rounds/{id}/finish` | кандидат | завершить досрочно, пересчитать рейтинг |
+| GET | `/arena/rounds/{id}/leaderboard` | все | таблица ICPC `ArenaBoard`; у работодателя — статус приглашения |
+| GET | `/arena/rounds/{id}/stream` | все | SSE: событие `board` при изменении таблицы |
+| GET | `/arena/rounds/{id}/editorial` | все | эталоны и статистика; кандидату — после конца его участия, иначе 403 |
+| GET | `/arena/submissions/{id}` | кандидат | своя отправка `ArenaSubmission` |
+| GET/PUT | `/arena/me`, `/arena/me/settings` | кандидат | рейтинг, история, место; `{show_arena}` |
+| POST | `/arena/rounds` | работодатель | `ArenaRoundInput` → раунд компании, 201 |
+| GET | `/arena/top?specialization=&grade=&has_fsp=&min_rating=&limit=` | работодатель | витрина `{total, items: ArenaTopItem[]}` |
+| GET | `/arena/candidates/{profile_id}` | работодатель | рейтинг и решения кандидата (решения — если кандидат открыл показ) |
+
+## Тестовый провайдер ФСП ID `/api/v1/fsp-id`
+
+Встроенный OpenID Connect-провайдер, пока Keycloak ФСП недоступен (FSP-20). Подключается, когда `FSP_OIDC_ISSUER` пуст и `FSP_OIDC_MOCK=true`. Путь без префикса `/api/v1` ниже — от корня приложения.
+
+| Метод | Путь | Описание |
+|---|---|---|
+| GET | `/api/v1/fsp-id/.well-known/openid-configuration` | discovery |
+| GET | `/api/v1/fsp-id/authorize` | страница входа: `client_id`, `redirect_uri` (только `{PUBLIC_URL}/fsp-callback`), `response_type=code`, `scope` c `openid`, `state`, `nonce`, `code_challenge`, `code_challenge_method=S256` |
+| POST | `/api/v1/fsp-id/authorize` | форма входа: `fsp_id`, `password`, `action=allow\|deny` → 303 на `redirect_uri` с `code` или `error=access_denied` |
+| POST | `/api/v1/fsp-id/token` | `grant_type=authorization_code`, `code`, `redirect_uri`, `code_verifier`, клиент через `client_secret_post` или `client_secret_basic` → `{id_token, access_token}`; код одноразовый, 120 секунд |
+| GET | `/api/v1/fsp-id/userinfo` | Bearer access-токен → claims участника (`sub`, `fsp_id`, `name`, `email`) |
+| GET | `/api/v1/fsp-id/jwks` | `{keys: []}`: id_token подписан HS256 секретом клиента |
 
 ## Служебное
 

@@ -62,7 +62,8 @@ flowchart TB
 | API | FastAPI, Pydantic v2, async SQLAlchemy | Бизнес-логика, OpenAPI |
 | Хранилище | PostgreSQL 16 (в разработке — SQLite) | Пользователи, профили, попытки, вакансии, приглашения |
 | Кэш и лимиты | Redis 7 | Ограничение частоты входа и регистрации |
-| LLM | GigaChat | Разбор резюме, оценка ответов на короткие задания. Без ключа работают правила |
+| LLM | GigaChat | Разбор резюме, оценка ответов на короткие задания, разбор решений Arena. Без ключа работают правила |
+| Песочница Arena | Landlock, seccomp, rlimit, аудит-хук Python | Запуск чужого кода на Python и Node.js внутри контейнера приложения без привилегий: без сети, без новых процессов, файловая система только для чтения |
 | Почта | SMTP; Mailpit в docker-compose | Подтверждение адреса |
 
 ### Модель данных
@@ -83,9 +84,14 @@ erDiagram
   candidate_profiles ||--o{ consent_events : ""
   companies ||--o{ employer_favorites : ""
   candidate_profiles ||--o{ employer_favorites : ""
+  arena_rounds ||--o{ arena_participants : ""
+  candidate_profiles ||--o{ arena_participants : ""
+  arena_participants ||--o{ arena_submissions : ""
+  candidate_profiles ||--o| arena_ratings : ""
+  companies ||--o{ arena_rounds : "спонсор"
 ```
 
-Подробно по полям — [docs/schema.md](../schema.md). Схема создаётся миграцией `alembic/versions/0001_initial_schema.py`, журнал согласий и избранное добавляет `0002_consents_favorites.py`.
+Подробно по полям — [docs/schema.md](../schema.md). Схема создаётся миграцией `alembic/versions/0001_initial_schema.py`, журнал согласий и избранное добавляет `0002_consents_favorites.py`, таблицы Code Arena — `0005_code_arena.py`.
 
 ## Описание API
 
@@ -97,6 +103,7 @@ erDiagram
 | Справочник | `/api/v1/catalog` | `GET` — специализации, грейды, отрасли, форматы работы |
 | Кандидат | `/api/v1/candidate` | профиль, резюме, PDF, настройки, ФСП, опрос, тест, приглашения, вакансии, отклики, задания |
 | Работодатель | `/api/v1/employer` | компания, вакансии, подборка, тест под вакансию, банк кандидатов, категории, приглашения, отклики, задания |
+| Code Arena | `/api/v1/arena` | раунды, вход, запуск на примерах, отправка, таблица и поток SSE, разбор задач, рейтинг, витрина и раунды работодателя |
 | Служебное | `/health` | проверка живости |
 
 Ошибки возвращаются единым форматом `{error_code, message, detail}`; коды: 400 — валидация, 401 — нет токена, 403 — чужая роль или ресурс, 404 — нет объекта, 409 — конфликт состояния, 422 — ошибка схемы, 429 — превышен лимит.
@@ -111,6 +118,7 @@ erDiagram
 | Хранение паролей и токенов | bcrypt; JWT access 30 минут и refresh 30 дней; секрет только из окружения, слабый секрет в production останавливает запуск |
 | Защита от перебора | Лимиты: регистрация 3 в минуту, вход 5 в минуту с адреса |
 | Минимизация | Работодатель видит псевдоним «Кандидат #A1B2», пока кандидат не открыл имя в настройках приватности |
+| Исполнение чужого кода | Решения Arena запускаются отдельными процессами под Landlock и seccomp без сети и записи на диск, с лимитами процессора и памяти; JavaScript включается только при обоих слоях ядра. Состояние слоёв на стенде — `GET /api/v1/arena/sandbox` |
 
 ## Интеграция с реестром ФСП
 
@@ -144,25 +152,34 @@ sequenceDiagram
 
 `MockFspProvider` детерминирован по ФСП ID формата `FSP-NNNN…`: один и тот же ID всегда даёт одну историю, а ID, оканчивающийся на 0, моделирует участника без истории. Ответ сохраняется снимком в профиле, поэтому подборка не зависит от доступности реестра.
 
-### Целевая схема с ФСП ID на Keycloak
+### Вход и привязка через ФСП ID (OpenID Connect)
+
+Ручной ввод ФСП ID не доказывает, что идентификатор принадлежит кандидату. Поэтому HyreKit — клиент OpenID Connect: кандидат входит у провайдера ФСП ID, и только после этого ФСП ID получает отметку «подтверждён ФСП ID». Поток — Authorization Code + PKCE (S256), код обменивает бэкенд как конфиденциальный клиент.
 
 ```mermaid
 sequenceDiagram
-  participant K as Кандидат
-  participant H as HyreKit
-  participant KC as Keycloak ФСП
-  participant R as API реестра ФСП
-  K->>H: «Войти через ФСП ID»
-  H->>KC: OIDC Authorization Code + PKCE (scope: openid profile fsp:achievements)
-  KC-->>K: страница входа ФСП
-  K->>KC: логин и согласие на передачу достижений
-  KC-->>H: code → id_token (sub = ФСП ID) + access_token
-  H->>R: GET /athletes/{sub}/achievements (Bearer access_token)
-  R-->>H: достижения
-  H->>H: привязка sub к профилю, снимок, пересчёт рейтинга
+  participant K as Кандидат (браузер)
+  participant H as HyreKit API
+  participant P as Провайдер ФСП ID
+  K->>H: POST /auth/fsp/start {mode}
+  H->>P: discovery (кэш на час)
+  H-->>K: authorize_url + cookie fsp_oidc (state, nonce, PKCE)
+  K->>P: страница входа ФСП ID
+  K->>P: логин и согласие на передачу данных
+  P-->>K: redirect /fsp-callback?code&state
+  K->>H: POST /auth/fsp/callback {code, state}
+  H->>H: сверка state с cookie
+  H->>P: POST /token (code, code_verifier, client_secret)
+  P-->>H: id_token + access_token
+  H->>H: проверка подписи, iss, aud, exp, nonce
+  H->>P: GET /userinfo (sub совпадает)
+  H->>H: sub → профиль, снимок достижений через FspProvider
+  H-->>K: токены HyreKit (вход) или подтверждённая привязка
 ```
 
-Замена эмулятора — реализация того же протокола `FspProvider.fetch` поверх HTTP-клиента; остальной код не меняется. Вход через Keycloak добавляется как второй способ аутентификации: HyreKit выпускает свои JWT после проверки `id_token`, поэтому кабинеты и роли не меняются. Обновление достижений — периодически или по вебхуку реестра.
+Состояние потока (`state`, `nonce`, `code_verifier`) хранится в подписанной HttpOnly-cookie на 10 минут, поэтому вход работает на любом числе экземпляров API. Один участник ФСП (`sub` провайдера) подтверждается не более чем в одном профиле; вход ищет профиль по `sub`, затем кандидата с подтверждённой провайдером почтой, иначе создаёт нового подтверждённого кандидата. HyreKit выпускает свои JWT, поэтому кабинеты и роли не меняются.
+
+Провайдер задаётся переменными `FSP_OIDC_*`. Keycloak ФСП в рамках хакатона недоступен, поэтому приложение поднимает встроенный тестовый провайдер по тому же протоколу (`/api/v1/fsp-id`: discovery, страница входа, token, userinfo). Клиент ходит к нему по HTTP так же, как ходил бы к Keycloak, и проверяет `id_token` той же функцией: HS256 подписью секрета клиента у тестового провайдера, RS256 и ES256 ключами из `jwks_uri` у Keycloak. Подключение Keycloak — `FSP_OIDC_ISSUER`, `FSP_OIDC_CLIENT_ID`, `FSP_OIDC_CLIENT_SECRET`, без изменений кода. Достижения по-прежнему даёт `FspProvider`; когда появится API реестра, его реализация получит access-токен из того же входа.
 
 ## Масштабирование
 

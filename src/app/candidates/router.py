@@ -125,9 +125,11 @@ async def update_settings(
             raw = get_provider().fetch(fsp_id)
             if raw is None:
                 raise NotFound('Участник ФСП')
+            if fsp_id != profile.fsp_id:  # ручной ввод другого ID снимает подтверждение
+                profile.fsp_sub = None
             profile.fsp_id, profile.fsp_snapshot = fsp_id, raw
         else:
-            profile.fsp_id, profile.fsp_snapshot = None, None
+            profile.fsp_id, profile.fsp_snapshot, profile.fsp_sub = None, None, None
     await session.flush()
     await session.refresh(profile)
     return service.to_out(profile)

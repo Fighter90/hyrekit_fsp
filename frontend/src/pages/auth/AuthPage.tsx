@@ -4,6 +4,7 @@ import { Eye, EyeOff, UserRound, Building2, Mail, Lock, ArrowRight } from 'lucid
 import { useAuth } from '../../contexts/AuthContext'
 import { Button } from '../../components/ui/Button'
 import Field from '../../components/ui/Field'
+import FspIdButton from '../../components/settings/FspIdButton'
 import type { Role } from '../../api/types'
 import { errorMessage } from '../../lib/format'
 
@@ -168,6 +169,19 @@ export default function AuthPage() {
           {mode === 'login' ? 'Войти' : role === 'employer' ? 'Зарегистрировать компанию' : 'Начать как кандидат'}
         </Button>
       </form>
+
+      {(mode === 'login' || role === 'candidate') && (
+        <div className="auth__alt">
+          <span className="auth__or muted tiny">или</span>
+          <FspIdButton
+            mode="login"
+            size="lg"
+            block
+            label={mode === 'login' ? 'Войти через ФСП ID' : 'Продолжить через ФСП ID'}
+            onError={setError}
+          />
+        </div>
+      )}
 
       {mode === 'login' && (
         <div className="demo-hint">
