@@ -4,10 +4,12 @@
 
 | Что | Адрес |
 | --- | --- |
-| Прототип | <https://hyrekit.ru> — площадка в Yandex Cloud; локально прототип поднимается одной командой ([Инструкция запуска](#инструкция-запуска)) |
+| Прототип | <https://hyrekit.ru> — стенд в Yandex Cloud; экспресс-тест без регистрации — <https://hyrekit.ru/express>. Локально прототип поднимается одной командой ([Инструкция запуска](#инструкция-запуска)) |
 | Описание API (Swagger) | <https://hyrekit.ru/docs>, локально — <http://localhost:8000/docs> |
 | Репозиторий | <https://github.com/Fighter90/hyrekit_fsp> |
 | Сопроводительная документация | [docs/guide/README.md](docs/guide/README.md), одним файлом — [docx](docs/HyreKit_Documentation.docx) и [pdf](docs/HyreKit_Documentation.pdf) |
+| Инструкция для жюри | [docs/jury.md](docs/jury.md) — стенд, демо-аккаунты, экспресс-тест за 5 минут, что посмотреть работодателем |
+| Презентация (питч на 10 минут) | [pptx](docs/presentation/HyreKit_pitch.pptx) и [pdf](docs/presentation/HyreKit_pitch.pdf), заметки докладчика в pptx |
 
 Платформа-агрегатор ИТ-вакансий с верифицированным профилем достижений участника ФСП. Хакатон Федерации спортивного программирования 2026, команда «Команда 1».
 
@@ -86,7 +88,7 @@ docker compose up -d --build
 | Работодатель | `employer@hyrekit.ru` | Компания «ТехноПлатформа», 3 вакансии с подборками, 2 коротких задания |
 | Синтетические кандидаты | `talent01@demo.hyrekit.ru` … `talent120@demo.hyrekit.ru` | Прошли тест через симуляцию по модели валидации |
 
-**Экспресс-тест для жюри.** На главной ссылка «Экспресс-тест за 5 минут без регистрации» ведёт на `/express`: выберите направление и грейд, отметьте согласие и пройдите 5 заданий. Каждый запуск создаёт отдельного гостевого кандидата, поэтому эксперты не мешают друг другу. После теста войдите как `employer@hyrekit.ru` — гость будет в подборке и банке кандидатов. Выключается переменной `GUEST_MODE=false`.
+**Экспресс-тест для жюри** (пошагово — [docs/jury.md](docs/jury.md)). На главной ссылка «Экспресс-тест за 5 минут без регистрации» ведёт на `/express`: выберите направление и грейд, отметьте согласие и пройдите 5 заданий. Каждый запуск создаёт отдельного гостевого кандидата, поэтому эксперты не мешают друг другу. После теста войдите как `employer@hyrekit.ru` — гость будет в подборке и банке кандидатов. Выключается переменной `GUEST_MODE=false`.
 
 **Вход через ФСП ID.** На странице входа кнопка «Войти через ФСП ID», в настройках кандидата «Привязать через ФСП ID» (OpenID Connect, FSP-20). Пока Keycloak ФСП недоступен, работает встроенный тестовый провайдер: участники `FSP-123457` и `FSP-123450`, пароль `fsp2026`. Подтверждённый ФСП ID работодатель видит с отметкой «подтверждён ФСП ID».
 
@@ -320,6 +322,8 @@ flowchart TB
 │   ├── decisions/      # ADR
 │   ├── spec/api.md     # контракт API
 │   ├── validation/     # результаты валидации методики
+│   ├── presentation/   # питч pptx и pdf, скриншоты стенда
+│   ├── jury.md         # инструкция для жюри
 │   └── assets/         # логотип, скриншоты
 ├── PRODUCT.md CONTEXT.md DESIGN.md AGENTS.md CHANGELOG.md
 └── docker-compose.yml
@@ -390,6 +394,8 @@ GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)) на ка�
 | --- | --- |
 | [docs/guide/](docs/guide/README.md) | Сопроводительная документация для жюри: продукт, сценарий, методика, архитектура, запуск, технологии, команда |
 | [HyreKit_Documentation.docx](docs/HyreKit_Documentation.docx), [.pdf](docs/HyreKit_Documentation.pdf) | Те же разделы одним файлом, сборка — `python scripts/build_docs.py` |
+| [docs/jury.md](docs/jury.md) | Инструкция для жюри: стенд, демо-аккаунты, экспресс-тест, сценарий работодателя |
+| [docs/presentation/](docs/presentation/HyreKit_pitch.pdf) | Питч на 10 минут: [pptx](docs/presentation/HyreKit_pitch.pptx) с заметками докладчика и [pdf](docs/presentation/HyreKit_pitch.pdf); скриншоты стенда — `docs/presentation/assets/` |
 | [docs/openapi.json](docs/openapi.json) | Спецификация OpenAPI, выгрузка — `PYTHONPATH=src python scripts/export_openapi.py` |
 | [docs/specs/](docs/specs/README.md) | Спецификации задач |
 | [docs/spec/api.md](docs/spec/api.md) | Контракт API |
