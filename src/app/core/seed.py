@@ -27,8 +27,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.assessment import engine
 from app.assessment.simulate import simulate
 from app.auth.models import User, UserRole
-from app.candidates.models import DEFAULT_PRIVACY, CandidateProfile
-from app.candidates.service import utcnow
+from app.candidates.models import DEFAULT_PRIVACY, CandidateProfile, ConsentEvent
+from app.candidates.service import CONSENT_VERSION, utcnow
 from app.catalog.data import GRADE_CODES, GRADE_ORDER, SPEC_BY_CODE, SPEC_CODES, category_code
 from app.challenges.models import Challenge
 from app.core.database import get_session_factory
@@ -197,6 +197,16 @@ async def _synthetic(session: AsyncSession, index: int, rng: random.Random, hash
         consent_given_at=now - timedelta(days=rng.randint(1, 60)),
     )
     session.add(profile)
+    await session.flush()
+    session.add(
+        ConsentEvent(
+            profile_id=profile.id,
+            version=CONSENT_VERSION,
+            action='given',
+            created_at=profile.consent_given_at,
+            updated_at=profile.consent_given_at,
+        )
+    )
 
 
 async def seed_demo(session: AsyncSession) -> None:

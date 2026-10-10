@@ -28,6 +28,21 @@ describe('ApiClient', () => {
     expect(f.mock.calls[2][0]).toBe('/api/v1/candidate/vacancies?q=go')
   })
 
+  it('строит запросы избранного и журнала согласий', async () => {
+    const f = vi.fn(async () => json([]))
+    vi.stubGlobal('fetch', f)
+    const api = new ApiClient('/api/v1')
+    await api.getFavorites('v1')
+    expect(f.mock.calls[0][0]).toBe('/api/v1/employer/favorites?vacancy_id=v1')
+    await api.getFavorites()
+    expect(f.mock.calls[1][0]).toBe('/api/v1/employer/favorites')
+    await api.addFavorite('p1', { vacancy_id: 'v1' })
+    const [url, init] = f.mock.calls[2] as unknown as [string, RequestInit]
+    expect([url, init.method, JSON.parse(String(init.body))]).toEqual(['/api/v1/employer/favorites/p1', 'PUT', { vacancy_id: 'v1' }])
+    await api.getConsents()
+    expect(f.mock.calls[3][0]).toBe('/api/v1/candidate/consents')
+  })
+
   it('передаёт Bearer-токен и тело JSON', async () => {
     const f = vi.fn(async () => json({ saved: true }))
     vi.stubGlobal('fetch', f)

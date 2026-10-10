@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import JSON, Boolean, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base, TimestampMixin, UUIDMixin
@@ -43,3 +43,15 @@ class Vacancy(UUIDMixin, TimestampMixin, Base):
     is_published: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
 
     company: Mapped[Company] = relationship(lazy='joined')
+
+
+class Favorite(UUIDMixin, TimestampMixin, Base):
+    """Шортлист работодателя: отмеченный кандидат, при желании — под конкретную потребность."""
+
+    __tablename__ = 'employer_favorites'
+    __table_args__ = (UniqueConstraint('company_id', 'profile_id', name='uq_favorite_company_profile'),)
+
+    company_id: Mapped[UUID] = mapped_column(ForeignKey('companies.id', ondelete='CASCADE'), index=True)
+    profile_id: Mapped[UUID] = mapped_column(ForeignKey('candidate_profiles.id', ondelete='CASCADE'), index=True)
+    vacancy_id: Mapped[UUID | None] = mapped_column(ForeignKey('vacancies.id', ondelete='SET NULL'))
+    note: Mapped[str | None] = mapped_column(String(500))

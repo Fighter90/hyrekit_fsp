@@ -1,0 +1,23 @@
+#cloud-config
+# Первичная настройка ВМ площадки. Подставляет deploy.sh: __COMPOSE_B64__, __CADDY_B64__, __SA_KEY_B64__, __UP_B64__.
+# Скрипт запуска лежит отдельно (hyrekit-up.sh) и идёт в base64: yc подставляет переменные окружения (знак доллара) в файлы метаданных.
+package_update: true
+packages: [docker.io, docker-compose-v2, jq, curl]
+write_files:
+  - path: /opt/hyrekit/compose.prod.yaml
+    encoding: b64
+    content: __COMPOSE_B64__
+  - path: /opt/hyrekit/Caddyfile
+    encoding: b64
+    content: __CADDY_B64__
+  - path: /opt/hyrekit/sa-key.json
+    encoding: b64
+    permissions: '0600'
+    content: __SA_KEY_B64__
+  - path: /var/lib/cloud/scripts/per-boot/hyrekit-up.sh
+    permissions: '0755'
+    encoding: b64
+    content: __UP_B64__
+runcmd:
+  - systemctl enable --now docker
+  - /var/lib/cloud/scripts/per-boot/hyrekit-up.sh

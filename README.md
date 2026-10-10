@@ -258,7 +258,7 @@ flowchart TB
 ├── tests/              # pytest: сквозной сценарий, методика, ядро
 ├── scripts/            # dev.sh, validate.py, smoke.py, load.py
 ├── alembic/            # миграции
-├── deploy/yc/          # площадка Yandex Cloud: compose, Caddy
+├── deploy/yc/          # площадка Yandex Cloud: deploy.sh, cloud-init, compose, Caddy
 ├── docs/
 │   ├── guide/          # сопроводительная документация 1–7
 │   ├── specs/          # спецификации задач FSP-N
@@ -325,7 +325,7 @@ GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)) на ка�
 
 ## Развёртывание
 
-Целевая площадка — <https://hyrekit.ru>: ВМ Compute Cloud в Yandex Cloud, Docker Compose из `deploy/yc/`, Caddy с сертификатом Let's Encrypt. Пошагово — [deploy/yc/README.md](deploy/yc/README.md) и [docs/runbook.md](docs/runbook.md).
+Целевая площадка — <https://hyrekit.ru>: ВМ Compute Cloud в Yandex Cloud, Docker Compose из `deploy/yc/`, Caddy с сертификатом Let's Encrypt. Выкатка одной командой — `deploy/yc/deploy.sh` (нужны `YC_SA_KEY_JSON` и `TIMEWEB_TOKEN`). Пошагово — [deploy/yc/README.md](deploy/yc/README.md) и [docs/runbook.md](docs/runbook.md).
 
 ## Документация
 
