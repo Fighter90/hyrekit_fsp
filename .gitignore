@@ -325,3 +325,6 @@ frontend/coverage/
 
 # Локальная SQLite-база scripts/dev.sh
 .dev.db
+
+# локальные данные Claude Code
+.claude/
