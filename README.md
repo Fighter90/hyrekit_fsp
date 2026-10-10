@@ -203,6 +203,7 @@ cd frontend && npm ci && npm run dev          # http://localhost:5173, /api пр
 | `CORS_ORIGINS` | localhost | Разрешённые адреса фронтенда |
 | `GIGACHAT_CREDENTIALS` | пусто | Ключ GigaChat; без него работают правила |
 | `SEED_DEMO` | `true` | Демо-аккаунты и синтетический банк при старте |
+| `CALIBRATION_INTERVAL_MINUTES` | `60` | Как часто пересчитывать статус семейств заданий и исключать утёкшие (FSP-33); `0` — выключено |
 | `GUEST_MODE` | `true` | Экспресс-тест для жюри без регистрации (`POST /api/v1/auth/guest`) |
 | `PUBLIC_URL` | `http://localhost:3000` | Адрес фронтенда в ссылках писем |
 | `DOCS_ENABLED` | `true` | Swagger UI и `/openapi.json` |
@@ -214,6 +215,7 @@ cd frontend && npm ci && npm run dev          # http://localhost:5173, /api пр
 ruff check src tests scripts && ruff format --check src tests scripts   # линтер и формат
 pytest --cov=app                                                         # тесты бэкенда с покрытием
 PYTHONPATH=src python scripts/validate.py                                # валидация методики
+PYTHONPATH=src python scripts/calibrate.py                               # статус семейств заданий, исключение утёкших
 cd frontend && npm run lint && npm run build && npm test                 # фронтенд
 python scripts/smoke.py                                                  # дымовая проверка поднятого стенда
 python scripts/load.py                                                   # нагрузка: p50/p95 ключевых операций

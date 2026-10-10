@@ -119,6 +119,7 @@ cd frontend && npm ci && npm run dev               # http://localhost:5173, /api
 | `GIGACHAT_CREDENTIALS` | пусто | Ключ GigaChat; без него разбор резюме и оценка заданий идут по правилам |
 | `GIGACHAT_SCOPE`, `GIGACHAT_MODEL` | `GIGACHAT_API_PERS`, `GigaChat` | Параметры GigaChat |
 | `SEED_DEMO` | `true` | Демо-аккаунты и синтетический банк при старте |
+| `CALIBRATION_INTERVAL_MINUTES` | `60` | Как часто пересчитывать статус семейств заданий и исключать утёкшие (FSP-33); `0` — выключено |
 | `PUBLIC_URL` | `http://localhost:3000` | Адрес фронтенда в ссылках писем |
 | `DOCS_ENABLED` | `true` | Swagger UI и `/openapi.json` |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_TLS`, `MAIL_FROM` | пусто | Почта; пустой `SMTP_HOST` — ссылка в лог |
