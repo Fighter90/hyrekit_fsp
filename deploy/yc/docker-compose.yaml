@@ -1,0 +1,26 @@
+# Дополнение для площадки: docker compose -f docker-compose.yml -f deploy/yc/docker-compose.yaml up -d --build
+services:
+  app:
+    environment:
+      - ENVIRONMENT=production
+      - PUBLIC_URL=https://hyrekit.ru
+      - CORS_ORIGINS=["https://hyrekit.ru","https://www.hyrekit.ru"]
+
+  frontend:
+    ports: !reset []
+
+  caddy:
+    image: caddy:2.8-alpine
+    container_name: hyrekit-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/yc/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      - frontend
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
