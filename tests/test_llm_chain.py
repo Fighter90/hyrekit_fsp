@@ -62,7 +62,6 @@ _REAL_CLIENT = httpx.AsyncClient
 
 
 def _yandex(monkeypatch: pytest.MonkeyPatch, handler: Any) -> yandexgpt.YandexGPTClient:
-
     def factory(**kw: Any) -> httpx.AsyncClient:
         kw.pop('transport', None)
         return _REAL_CLIENT(transport=httpx.MockTransport(handler), **kw)
