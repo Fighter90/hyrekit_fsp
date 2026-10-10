@@ -97,7 +97,7 @@ else
   sed -e "s|__COMPOSE_B64__|$(b64 "$HERE/compose.prod.yaml")|" \
       -e "s|__CADDY_B64__|$(b64 "$HERE/Caddyfile")|" \
       -e "s|__SA_KEY_B64__|$(b64 "$WORK/vm-key.json")|" \
-      -e "s|__REGISTRY__|$REGISTRY|" -e "s|__TAG__|$TAG|" \
+      -e "s|__UP_B64__|$(sed -e "s|__REGISTRY__|$REGISTRY|" -e "s|__TAG__|$TAG|" "$HERE/hyrekit-up.sh" | base64 -w0)|" \
       "$HERE/cloud-init.yaml" > "$WORK/user-data.yaml"
   yc compute instance create --name "$VM" --hostname "$VM" \
     --platform standard-v3 --cores 2 --memory 4 --core-fraction 100 \
