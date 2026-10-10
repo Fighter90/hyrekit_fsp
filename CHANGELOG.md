@@ -20,3 +20,4 @@
 - Сопроводительная документация `docs/guide/`, спецификации, ADR 0001–0007, runbook, схема данных.
 - CI: ruff, pytest с покрытием, валидация, сборка и тесты фронтенда.
 - Дымовая проверка развёрнутого стенда `scripts/smoke.py`: 28 шагов сквозного сценария через живой API и Mailpit.
+- Выкатка в Yandex Cloud одной командой `deploy/yc/deploy.sh`: Container Registry, ВМ с cloud-init без SSH, A-записи в Timeweb, дымовая проверка (FSP-18, FSP-34).

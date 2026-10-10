@@ -12,7 +12,10 @@
 
 Файлы:
 
-- `docker-compose.yaml` — дополнение к корневому `docker-compose.yml`: Caddy перед фронтендом, production-окружение.
+- `deploy.sh` — выкатка одной командой без SSH: образы в Container Registry, статический IP, группа безопасности, ВМ с cloud-init, A-записи в Timeweb, дымовая проверка.
+- `compose.prod.yaml` — стек на ВМ из готовых образов реестра (app, db, redis, frontend, Caddy).
+- `cloud-init.yaml` — первичная настройка ВМ и скрипт `hyrekit-up`, который на каждой загрузке берёт тег версии из метаданных ВМ и поднимает стек.
+- `docker-compose.yaml` — дополнение к корневому `docker-compose.yml` для ручной сборки прямо на сервере.
 - `Caddyfile` — HTTPS и проксирование.
 
 Пошаговая выкатка и обслуживание — [docs/runbook.md](../../docs/runbook.md).
