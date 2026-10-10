@@ -1,11 +1,11 @@
 # Площадка в Yandex Cloud
 
-Целевой адрес — <https://hyrekit.ru>. Схема для хакатонной нагрузки (десятки одновременных пользователей):
+Площадка работает на <https://hyrekit.ru>. Схема для хакатонной нагрузки (десятки одновременных пользователей):
 
 | Ресурс | Параметры |
 | -- | -- |
 | Compute Cloud, ВМ | Ubuntu 24.04, 2 vCPU, 4 ГБ RAM, 30 ГБ SSD, публичный статический IP |
-| Сеть | Группа безопасности: входящие 22 (только адреса команды), 80, 443 |
+| Сеть | Группа безопасности: входящие 22 (адреса из `SSH_CIDR`, по умолчанию любые — сузить до адресов команды), 80, 443 |
 | DNS | A-записи `hyrekit.ru` и `www.hyrekit.ru` на статический IP |
 | TLS | Caddy с автоматическим сертификатом Let's Encrypt |
 | Резервные копии | Расписание снимков диска раз в сутки, хранение 7 дней |
@@ -19,7 +19,9 @@
 - `docker-compose.yaml` — дополнение к корневому `docker-compose.yml` для ручной сборки прямо на сервере.
 - `Caddyfile` — HTTPS и проксирование.
 
-Переменные `deploy.sh`: `FOLDER_ID`, `ZONE`, `TAG`, `SKIP_DNS=1`, `SKIP_BUILD=1` (образы с тегом `TAG` уже в реестре), `DISK_TYPE` и `DISK_SIZE` (в новом облаке квота на SSD бывает нулевой — `DISK_TYPE=network-hdd DISK_SIZE=15`).
+Переменные `deploy.sh`: `YC_SA_KEY_JSON` (обязательна), `TIMEWEB_TOKEN` (обязательна без `SKIP_DNS=1`), `FOLDER_ID`, `ZONE`, `DOMAIN` (по умолчанию `hyrekit.ru`), `VM` (имя ВМ, `hyrekit`), `TAG`, `SKIP_DNS=1`, `SKIP_BUILD=1` (образы с тегом `TAG` уже в реестре), `DISK_TYPE` и `DISK_SIZE` (в новом облаке квота на SSD бывает нулевой — `DISK_TYPE=network-hdd DISK_SIZE=15`), `SSH_CIDR` (откуда открыт порт 22, по умолчанию `0.0.0.0/0`), `SSH_PUBKEY` (ключ для отладки по SSH, необязательно), `EXTRA_ENV_FILE` (файл с `SMTP_*`, `GIGACHAT_*`, `YANDEX_GPT_*` для приложения).
+
+`EXTRA_ENV_FILE` попадает в метаданные ВМ `hyrekit-extra-env` целиком и заменяет прежнее значение: в файле должны быть все нужные переменные, а не только изменённые.
 
 Реестр Yandex Cloud не принимает OCI-индекс с аттестациями, который пушит Docker с containerd-хранилищем. Если `docker push` падает с `Cannot read manifest data`, собирать так: `docker buildx build --provenance=false --sbom=false --output type=image,name=<образ>,push=true,oci-mediatypes=false`, затем `SKIP_BUILD=1`.
 

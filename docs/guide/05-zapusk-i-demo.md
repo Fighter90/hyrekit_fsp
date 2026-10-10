@@ -17,7 +17,7 @@ docker compose up -d --build
 | Swagger UI | <http://localhost:8000/docs> |
 | Письма подтверждения (Mailpit) | <http://localhost:8025> |
 
-При первом старте API применяет миграцию и создаёт демо-данные: два аккаунта, компанию с тремя вакансиями и двумя заданиями, 120 синтетических кандидатов по шести направлениям. Повторный старт ничего не дублирует.
+При первом старте API применяет миграции (`alembic upgrade head`) и создаёт демо-данные: два аккаунта, компанию с тремя вакансиями и двумя заданиями, 120 синтетических кандидатов по шести направлениям. Повторный старт ничего не дублирует.
 
 Проверка, что всё поднялось:
 
@@ -47,7 +47,7 @@ PATH=$PWD/.venv/bin:$PATH scripts/dev.sh          # API на http://localhost:80
 cd frontend && npm ci && npm run dev               # http://localhost:5173, /api проксируется на :8000
 ```
 
-`scripts/dev.sh` выставляет `DATABASE_URL` на SQLite, применяет миграцию и запускает API с автоперезагрузкой. Демо-данные создаются так же, как в Docker. Ссылка подтверждения почты без SMTP печатается в лог API.
+`scripts/dev.sh` выставляет `DATABASE_URL` на SQLite, применяет миграции (`alembic upgrade head`) и запускает API с автоперезагрузкой. Демо-данные создаются так же, как в Docker. Ссылка подтверждения почты без SMTP печатается в лог API.
 
 ## Демо-аккаунты
 
@@ -131,12 +131,14 @@ cd frontend && npm ci && npm run dev               # http://localhost:5173, /api
 | `GUEST_MODE` | `true` | Экспресс-тест для жюри без регистрации (`POST /api/v1/auth/guest`) |
 | `FSP_OIDC_ISSUER` | пусто | Адрес провайдера ФСП ID (Keycloak realm). Пусто — встроенный тестовый провайдер `/api/v1/fsp-id` (FSP-20) |
 | `FSP_OIDC_CLIENT_ID` / `FSP_OIDC_CLIENT_SECRET` | `hyrekit` / пусто | Клиент HyreKit у провайдера; у тестового провайдера секрет выводится из `SECRET_KEY` |
+| `FSP_OIDC_SCOPE` | `openid profile email` | Запрашиваемые у провайдера scope |
 | `FSP_OIDC_ID_CLAIM` | `fsp_id` | Claim с ФСП ID; без него берётся `preferred_username` |
 | `FSP_OIDC_BACKCHANNEL_URL` | пусто | Внутренний адрес провайдера для запросов сервер-сервер, если публичный недоступен из контейнера |
 | `FSP_OIDC_MOCK` | `true` | Включить встроенный тестовый провайдер, когда `FSP_OIDC_ISSUER` пуст |
 | `PUBLIC_URL` | `http://localhost:3000` | Адрес фронтенда в ссылках писем |
 | `DOCS_ENABLED` | `true` | Swagger UI и `/openapi.json` |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_TLS`, `MAIL_FROM` | пусто | Почта; пустой `SMTP_HOST` — ссылка в лог |
+| `SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD` | пусто | Почта; пустой `SMTP_HOST` — ссылка в лог |
+| `SMTP_PORT`, `SMTP_TLS`, `MAIL_FROM` | `1025`, `false`, `HyreKit <noreply@hyrekit.ru>` | Порт, TLS и отправитель писем |
 
 ## Сборка и проверки
 
@@ -149,4 +151,4 @@ cd frontend && npm run lint && npm run build && npm test                 # фр�
 
 ## Развёртывание в Yandex Cloud
 
-Целевая площадка — <https://hyrekit.ru>. Схема: одна ВМ Compute Cloud (2 vCPU, 4 ГБ) с Docker Compose из этого репозитория, Caddy или nginx с сертификатом Let's Encrypt перед контейнером `frontend`, ежедневный снимок диска. Пошаговая инструкция — [docs/runbook.md](../runbook.md), файлы площадки — `deploy/yc/`.
+Площадка работает на <https://hyrekit.ru>. Схема: одна ВМ Compute Cloud (2 vCPU, 4 ГБ) со стеком из образов Container Registry по `deploy/yc/compose.prod.yaml`, Caddy с сертификатом Let's Encrypt перед контейнером `frontend`, ежедневный снимок диска. Выкатка одной командой — `deploy/yc/deploy.sh`. Пошаговая инструкция — [docs/runbook.md](../runbook.md), файлы площадки — `deploy/yc/`.
