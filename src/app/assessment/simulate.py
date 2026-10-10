@@ -50,6 +50,6 @@ def answer_attempt(planned: list[engine.PlannedItem], theta: float, rng: random.
 def simulate(specialization: str, grade: str, theta: float, rng: random.Random) -> dict[str, Any]:
     """Полная попытка: план → ответы → оценка и решение по грейду."""
     planned = engine.build_blueprint(specialization, grade, rng_seed=rng.randrange(2**62))
-    scored = engine.score_attempt(planned, answer_attempt(planned, theta, rng))
+    scored = engine.score_attempt(planned, answer_attempt(planned, theta, rng), grade=grade)
     decision = engine.decide(scored['ability'], grade, None)
     return {**scored, 'passed': decision.passed, 'suggestion': decision.suggestion}

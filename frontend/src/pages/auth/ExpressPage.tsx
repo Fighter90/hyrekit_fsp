@@ -81,8 +81,8 @@ export default function ExpressPage() {
       </form>
 
       <p className="auth__switch muted small">
-        Это демо-режим. Полный тест — 10 заданий и 20 минут, грейд можно менять раз в 90 дней.
-        Демо-работодатель: employer@hyrekit.ru · HyreKit2026, <Link to="/auth">вход</Link>.
+        Грейд подтверждается так же, как в полном тесте: нужно 3 верных ответа из 5. Полный тест — 10 заданий
+        и 20 минут. Работодатель для проверки подборки: employer@hyrekit.ru · HyreKit2026, <Link to="/auth">вход</Link>.
       </p>
     </div>
   )

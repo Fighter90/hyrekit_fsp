@@ -6,11 +6,16 @@
    у границы грейда. Структура одинакова для всех кандидатов грейда, а
    конкретные варианты разные — так сохраняется сопоставимость сложности.
 2. Оценка. Каждому уровню соответствует трудность b = level − 3 (логиты).
-   Способность θ оценивается методом MAP (Rasch + априорное N(0, 1)), что
-   даёт конечную оценку даже при 0 или 100 % верных ответов.
-3. Решение. Грейд g подтверждён, если θ ≥ cut(g) = g − 2.5. Если θ уверенно
-   выше порога следующего грейда — система предлагает пройти тест выше; при
-   провале предлагается грейд ниже. Принудительного понижения нет.
+   Способность θ оценивается методом MAP (Rasch + априорное N(cut(g), 1)),
+   что даёт конечную оценку даже при 0 или 100 % верных ответов. Априорное
+   распределение стоит на пороге проверяемого грейда: без ответов оценка
+   ровно на границе и не подталкивает ни к сдаче, ни к провалу.
+3. Решение. Грейд g подтверждён, если θ ≥ cut(g) = g − CUT_OFFSET. Порог стоит
+   выше трудности заданий грейда: на 10 заданиях нужно около 6 верных, на 5 —
+   3 (у Intern и Lead соседние уровни упираются в края шкалы, поэтому у Intern
+   может хватить 5 из 10, а Lead нужно 7 из 10). Если
+   θ уверенно выше порога следующего грейда — система предлагает пройти тест
+   выше; при провале предлагается грейд ниже. Принудительного понижения нет.
 """
 
 from __future__ import annotations
@@ -27,6 +32,7 @@ ITEMS_PER_TOPIC = 2
 SECONDS_PER_ITEM = 120
 EXPRESS_ITEMS_PER_TOPIC = 1  # экспресс-тест для жюри: 5 тем × 1 задание
 EXPRESS_SECONDS_PER_ITEM = 60
+CUT_OFFSET = 1.75  # cut(g) = g − CUT_OFFSET; на 0.25 логита выше трудности заданий грейда
 UPGRADE_MARGIN = 0.35  # запас по θ над порогом следующего грейда
 MAX_CONCEPTUAL = 1  # не больше одного концептуального задания в попытке (см. bank.CONCEPTUAL)
 CONCEPTUAL_WEIGHT = 1.0  # вес концептуального ответа в оценке θ
@@ -34,7 +40,7 @@ CONCEPTUAL_WEIGHT = 1.0  # вес концептуального ответа в
 
 def cut(grade: str) -> float:
     """Порог способности для грейда (логиты)."""
-    return GRADE_ORDER[grade] - 2.5
+    return GRADE_ORDER[grade] - CUT_OFFSET
 
 
 def difficulty(level: int) -> float:
@@ -141,8 +147,15 @@ def decide(theta: float, tested_grade: str, current_grade: str | None) -> Decisi
     return Decision(False, current_grade, lower)
 
 
-def score_attempt(planned: list[PlannedItem], answers: dict[str, Any], *, prior_mean: float = 0.0) -> dict[str, Any]:
-    """Проверка ответов и агрегаты для результата."""
+def score_attempt(
+    planned: list[PlannedItem], answers: dict[str, Any], *, grade: str | None = None, prior_mean: float | None = None
+) -> dict[str, Any]:
+    """Проверка ответов и агрегаты для результата.
+
+    Априорное среднее — порог проверяемого грейда (`grade`); без грейда — 0.
+    """
+    if prior_mean is None:
+        prior_mean = cut(grade) if grade else 0.0
     responses: list[tuple[float, bool, float]] = []
     by_topic: dict[str, dict[str, int]] = {}
     weighted, weight_total, correct = 0.0, 0.0, 0

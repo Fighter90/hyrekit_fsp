@@ -145,7 +145,7 @@ def save_answer(attempt: AssessmentAttempt, item_id: str, answer: Any) -> None:
 async def finish(session: AsyncSession, profile: CandidateProfile, attempt: AssessmentAttempt) -> AssessmentAttempt:
     if attempt.finished_at is not None:
         return attempt
-    scored = engine.score_attempt(_plan(attempt), attempt.answers or {})
+    scored = engine.score_attempt(_plan(attempt), attempt.answers or {}, grade=attempt.grade)
     decision = engine.decide(scored['ability'], attempt.grade, profile.grade)
     now = utcnow()
     attempt.finished_at = now
