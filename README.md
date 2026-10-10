@@ -73,7 +73,7 @@ docker compose up -d --build
 | Swagger UI | <http://localhost:8000/docs> |
 | Письма подтверждения (Mailpit) | <http://localhost:8025> |
 
-Проверка «получилось»: `curl -s http://localhost:8000/health` отвечает `{"status":"ok",...}`, `docker compose ps` показывает app, db, redis, mailpit и frontend в состоянии healthy или running.
+Проверка «получилось»: `curl -s http://localhost:8000/health` отвечает `{"status":"healthy",...}`, `docker compose ps` показывает app, db, redis, mailpit и frontend в состоянии healthy или running.
 
 При первом старте API применяет миграцию и создаёт демо-данные. Демо-аккаунты, пароль у всех `HyreKit2026`:
 

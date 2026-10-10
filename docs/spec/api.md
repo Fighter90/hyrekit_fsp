@@ -274,5 +274,5 @@ interface InvitationInput { candidate_id: string; vacancy_id?: string | null; ti
 
 ## Служебное
 
-| GET | `/health` | `{status: "ok"}` |
+| GET | `/health` | `{status: "healthy", version}` |
 |---|---|---|

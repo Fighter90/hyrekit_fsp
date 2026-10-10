@@ -22,7 +22,7 @@ docker compose up -d --build
 Проверка, что всё поднялось:
 
 ```bash
-curl -s http://localhost:8000/health        # {"status":"ok",...}
+curl -s http://localhost:8000/health        # {"status":"healthy",...}
 docker compose ps                           # app, db, redis, mailpit, frontend — healthy / running
 ```
 
