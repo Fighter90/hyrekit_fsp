@@ -113,6 +113,10 @@ export default function AppLayout() {
         <main className="shell__content" key={loc.pathname}>
           <Outlet />
         </main>
+        {/* На телефоне боковая панель скрыта: версия — внизу страницы */}
+        <div className="shell__version">
+          <VersionTag inline />
+        </div>
       </div>
     </div>
   )

@@ -162,6 +162,8 @@ async def test_full_reverse_hiring_flow(client: AsyncClient, session) -> None:  
     assert r.status_code == 200
     apps = (await client.get('/api/v1/employer/applications', headers=emp)).json()
     assert apps[0]['candidate']['contacts_unlocked'] is True
+    vacs = (await client.get('/api/v1/candidate/vacancies', headers=cand)).json()
+    assert next(v for v in vacs if v['id'] == vacancy['id'])['applications_count'] == 1
 
     pdf = await client.get('/api/v1/candidate/profile/pdf', headers=cand)
     assert pdf.headers['content-type'] == 'application/pdf'

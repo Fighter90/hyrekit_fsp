@@ -12,7 +12,7 @@
 Если вы обнаружили уязвимость в HyreKit, пожалуйста:
 
 1. **НЕ** создавайте публичный Issue.
-2. Отправьте отчёт через [GitHub Security Advisories](../../security/advisories/new) (предпочтительно) или напишите на email, указанный в профиле владельца.
+2. Отправьте отчёт через [GitHub Security Advisories](https://github.com/Fighter90/hyrekit_fsp/security/advisories/new) (предпочтительно) или напишите на email, указанный в профиле владельца.
 3. Укажите:
    - Описание уязвимости
    - Шаги воспроизведения (PoC, если возможно)

@@ -26,6 +26,18 @@ _fonts_ready = False
 FORMATS = {'office': 'офис', 'hybrid': 'гибрид', 'remote': 'удалённо'}
 
 
+def years_label(years: float) -> str:
+    """«1 год», «3 года», «6 лет», «1.5 года»."""
+    if years != int(years):
+        return f'{years:g} года'
+    n = int(years)
+    if n % 10 == 1 and n % 100 != 11:
+        return f'{n} год'
+    if 2 <= n % 10 <= 4 and not 12 <= n % 100 <= 14:
+        return f'{n} года'
+    return f'{n} лет'
+
+
 def _fonts() -> None:
     """JetBrains Mono — фирменный шрифт ФСП с кириллицей."""
     global _fonts_ready
@@ -89,7 +101,7 @@ def render_profile_pdf(profile: dict[str, Any]) -> bytes:
         ('Подтверждённый грейд', grade),
         ('Результат теста', f"{profile['test_score']:.0f} / 100" if profile.get('test_score') is not None else '—'),
         ('Рейтинг в категории', f"{profile['rating']:.0f} / 100" if profile.get('rating') is not None else '—'),
-        ('Стаж', f"{profile['experience_years']:g} лет" if profile.get('experience_years') is not None else '—'),
+        ('Стаж', years_label(profile['experience_years']) if profile.get('experience_years') is not None else '—'),
         ('Отрасль', industries.get(profile.get('industry') or '', '—')),
         ('Город', profile.get('city') or '—'),
         ('Формат работы', FORMATS.get(profile.get('work_format') or '', '—')),

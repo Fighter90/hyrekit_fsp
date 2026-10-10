@@ -153,7 +153,9 @@ class LLMResponseError(AppError):
 # --- Домен HyreKit ---
 class NotFound(AppError):
     def __init__(self, what: str = 'Объект') -> None:
-        super().__init__(message=f'{what} не найден', status_code=404, error_code='NOT_FOUND')
+        # Род по последней букве: «Вакансия не найдена», «Приглашение не найдено»
+        tail = 'а' if what.endswith(('а', 'я')) else 'о' if what.endswith(('е', 'о')) else ''
+        super().__init__(message=f'{what} не найден{tail}', status_code=404, error_code='NOT_FOUND')
 
 
 class Forbidden(AppError):
