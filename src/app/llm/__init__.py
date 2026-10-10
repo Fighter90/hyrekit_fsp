@@ -1,1 +1,1 @@
-"""LLM-слой HyreKit: единственный провайдер — GigaChat (Сбер)."""
+"""LLM-слой HyreKit: GigaChat (Сбер) и резервный YandexGPT (Yandex AI Studio)."""

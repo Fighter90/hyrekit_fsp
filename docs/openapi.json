@@ -3511,6 +3511,33 @@
         ]
       }
     },
+    "/api/v1/llm/status": {
+      "get": {
+        "tags": [
+          "LLM"
+        ],
+        "summary": "Статус GigaChat и YandexGPT (проверочный запрос, кэш 5 минут)",
+        "operationId": "llm_status_api_v1_llm_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Llm Status Api V1 Llm Status Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/fsp-id/.well-known/openid-configuration": {
       "get": {
         "tags": [
@@ -5265,6 +5292,7 @@
             "type": "string",
             "enum": [
               "gigachat",
+              "yandexgpt",
               "rules"
             ],
             "title": "Source"

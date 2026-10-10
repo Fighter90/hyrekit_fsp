@@ -51,6 +51,7 @@ flowchart TB
   API --> Redis[(Redis 7: лимиты запросов)]
   API -->|SMTP| Mail[Почта / Mailpit]
   API -->|HTTPS, по ключу| Giga[GigaChat API]
+  API -.->|резерв, HTTPS| YGPT[YandexGPT API]
   API -.->|интерфейс FspProvider| FSP[Реестр ФСП: эмулятор в MVP]
 ```
 
@@ -62,7 +63,7 @@ flowchart TB
 | API | FastAPI, Pydantic v2, async SQLAlchemy | Бизнес-логика, OpenAPI |
 | Хранилище | PostgreSQL 16 (в разработке — SQLite) | Пользователи, профили, попытки, вакансии, приглашения |
 | Кэш и лимиты | Redis 7 | Ограничение частоты входа и регистрации |
-| LLM | GigaChat | Разбор резюме, оценка ответов на короткие задания, разбор решений Arena. Без ключа работают правила |
+| LLM | GigaChat, резерв YandexGPT (`app.llm.chain`) | Разбор резюме, оценка ответов на короткие задания, разбор решений Arena. Если не ответил ни один провайдер, работают правила; состояние — `GET /llm/status` |
 | Песочница Arena | Landlock, seccomp, rlimit, аудит-хук Python | Запуск чужого кода на Python и Node.js внутри контейнера приложения без привилегий: без сети, без новых процессов, файловая система только для чтения |
 | Почта | SMTP; Mailpit в docker-compose | Подтверждение адреса |
 

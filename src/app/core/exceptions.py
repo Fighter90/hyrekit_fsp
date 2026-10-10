@@ -115,13 +115,16 @@ class FileContentMismatch(AppError):
 
 
 # --- LLM ---
+LLM_TITLES = {'gigachat': 'GigaChat', 'yandexgpt': 'YandexGPT', 'llm': 'Языковая модель'}
+
+
 class LLMProviderUnavailable(AppError):
     def __init__(self, provider: str = 'gigachat') -> None:
         super().__init__(
-            message='GigaChat временно недоступен',
+            message=f'{LLM_TITLES.get(provider, provider)} временно недоступен',
             status_code=503,
             error_code='LLM_UNAVAILABLE',
-            detail='Проверьте GIGACHAT_CREDENTIALS или повторите запрос позже.',
+            detail='Проверьте GIGACHAT_CREDENTIALS и YANDEX_GPT_API_KEY или повторите запрос позже.',
         )
 
 
@@ -130,7 +133,7 @@ class LLMAuthError(AppError):
 
     def __init__(self, provider: str = 'gigachat') -> None:
         super().__init__(
-            message='Ключ авторизации GigaChat невалиден',
+            message=f'Ключ авторизации {LLM_TITLES.get(provider, provider)} невалиден',
             status_code=400,
             error_code='LLM_AUTH_ERROR',
             detail='Укажите корректный GIGACHAT_CREDENTIALS в переменных окружения.',

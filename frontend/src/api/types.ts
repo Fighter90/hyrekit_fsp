@@ -165,7 +165,7 @@ export interface CandidateSettingsUpdate {
 
 export interface ResumeParseResult {
   fields: CandidateProfileUpdate
-  source: 'gigachat' | 'rules'
+  source: 'gigachat' | 'yandexgpt' | 'rules'
   text_length: number
 }
 
@@ -511,7 +511,7 @@ export interface ArenaTestResult {
 export interface ArenaFeedback {
   summary: string
   points: string[]
-  source: 'rules' | 'gigachat'
+  source: 'rules' | 'gigachat' | 'yandexgpt'
 }
 
 export interface ArenaSubmission {

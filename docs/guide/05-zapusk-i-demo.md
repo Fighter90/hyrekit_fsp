@@ -28,6 +28,8 @@ docker compose ps                           # app, db, redis, mailpit, frontend 
 
 Полная проверка стенда одной командой — `python scripts/smoke.py` (нужен `httpx` из `requirements.txt`): 28 шагов сквозного сценария через живой API, включая письмо в Mailpit; для удалённого стенда — `--base https://hyrekit.ru --no-mail`.
 
+Тот же сценарий через интерфейс — `node scripts/e2e.cjs` (Playwright с Chromium; путь к пакету — в `NODE_PATH`, например `NODE_PATH=$(npm root -g)`). Скрипт открывает SPA в браузере и регистрирует двух новых кандидатов: оба проходят опрос и тест, отвечая наугад, и скрипт проверяет, что экран результата согласован (число верных, разбор по темам, вердикт и рекомендация), но не исход — при случайных ответах грейд обычно не подтверждается. Первый даёт согласие и привязывает ФСП ID с достижениями, второй — без ФСП ID. Затем демо-работодатель создаёт потребность, находит в подборке демо-кандидата `talent07@demo.hyrekit.ru` (у него есть категория и согласие) и приглашает его; кандидат входит и принимает приглашение, работодатель видит контакты. По умолчанию адрес — `http://localhost:5173`, для Docker — `--base http://localhost:3000`, для стенда — `--base https://hyrekit.ru`; `--headed` показывает браузер. Почту подтверждать не нужно. Прогон тратит 2 регистрации из лимита 3 в минуту, поэтому повторять не чаще раза в минуту. При падении шаг печатает FAIL и путь к скриншоту, код выхода 1. Спецификация — [fsp-56-e2e.md](../specs/fsp-56-e2e.md).
+
 Нагрузочная проверка — `python scripts/load.py --users 50 --duration 30`: p50 и p95 подборки, поиска, карточки и кабинета кандидата. Результаты и выводы — [docs/validation/load.md](../validation/load.md).
 
 Остановка: `docker compose down`; с удалением данных — `docker compose down -v`.
@@ -118,10 +120,20 @@ cd frontend && npm ci && npm run dev               # http://localhost:5173, /api
 | `REDIS_URL` | `redis://localhost:6379/0` | Лимиты запросов |
 | `ENVIRONMENT` | `development` | `production` включает строгие проверки |
 | `CORS_ORIGINS` | localhost | Разрешённые адреса фронтенда |
-| `GIGACHAT_CREDENTIALS` | пусто | Ключ GigaChat; без него разбор резюме и оценка заданий идут по правилам |
+| `GIGACHAT_CREDENTIALS` | пусто | Authorization Key GigaChat (developers.sber.ru); без ключа провайдер пропускается |
 | `GIGACHAT_SCOPE`, `GIGACHAT_MODEL` | `GIGACHAT_API_PERS`, `GigaChat` | Параметры GigaChat |
+| `YANDEX_GPT_API_KEY` | пусто | API-ключ Yandex AI Studio (сервисный аккаунт с ролью `ai.languageModels.user`); резервный провайдер |
+| `YANDEX_GPT_FOLDER_ID` | пусто | ID каталога Yandex Cloud для YandexGPT |
+| `YANDEX_GPT_MODEL` | `yandexgpt-lite/latest` | Модель YandexGPT |
+| `LLM_PROVIDERS` | `gigachat,yandexgpt` | Порядок опроса провайдеров; если не ответил никто, работают правила |
 | `SEED_DEMO` | `true` | Демо-аккаунты и синтетический банк при старте |
 | `CALIBRATION_INTERVAL_MINUTES` | `60` | Как часто пересчитывать статус семейств заданий и исключать утёкшие (FSP-33); `0` — выключено |
+| `GUEST_MODE` | `true` | Экспресс-тест для жюри без регистрации (`POST /api/v1/auth/guest`) |
+| `FSP_OIDC_ISSUER` | пусто | Адрес провайдера ФСП ID (Keycloak realm). Пусто — встроенный тестовый провайдер `/api/v1/fsp-id` (FSP-20) |
+| `FSP_OIDC_CLIENT_ID` / `FSP_OIDC_CLIENT_SECRET` | `hyrekit` / пусто | Клиент HyreKit у провайдера; у тестового провайдера секрет выводится из `SECRET_KEY` |
+| `FSP_OIDC_ID_CLAIM` | `fsp_id` | Claim с ФСП ID; без него берётся `preferred_username` |
+| `FSP_OIDC_BACKCHANNEL_URL` | пусто | Внутренний адрес провайдера для запросов сервер-сервер, если публичный недоступен из контейнера |
+| `FSP_OIDC_MOCK` | `true` | Включить встроенный тестовый провайдер, когда `FSP_OIDC_ISSUER` пуст |
 | `PUBLIC_URL` | `http://localhost:3000` | Адрес фронтенда в ссылках писем |
 | `DOCS_ENABLED` | `true` | Swagger UI и `/openapi.json` |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_TLS`, `MAIL_FROM` | пусто | Почта; пустой `SMTP_HOST` — ссылка в лог |

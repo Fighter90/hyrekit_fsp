@@ -17,11 +17,11 @@ deploy/yc/deploy.sh                # FOLDER_ID, ZONE, DOMAIN, TAG, SSH_CIDR, SSH
 
 Скрипт идемпотентен. В конце он ждёт `https://hyrekit.ru/health` и запускает `scripts/smoke.py --no-mail`.
 
-Секреты базы и `SECRET_KEY` генерируются на ВМ при первой загрузке (`/opt/hyrekit/secrets.env`) и не покидают её. Дополнительные переменные (`GIGACHAT_CREDENTIALS`, `SMTP_*`) передаются метаданными ВМ:
+Секреты базы и `SECRET_KEY` генерируются на ВМ при первой загрузке (`/opt/hyrekit/secrets.env`) и не покидают её. Дополнительные переменные (`GIGACHAT_*`, `YANDEX_GPT_*`, `SMTP_*`) передаются метаданными ВМ. Метаданные `hyrekit-extra-env` заменяются целиком, поэтому передавайте все переменные сразу; `deploy.sh` принимает их файлом `EXTRA_ENV_FILE`:
 
 ```bash
 yc compute instance add-metadata --name hyrekit \
-  --metadata hyrekit-extra-env="$(printf 'GIGACHAT_CREDENTIALS=...\nSMTP_HOST=...\n' | base64 -w0)"
+  --metadata hyrekit-extra-env="$(printf 'GIGACHAT_CREDENTIALS=...\nYANDEX_GPT_API_KEY=...\nYANDEX_GPT_FOLDER_ID=...\nSMTP_HOST=...\n' | base64 -w0)"
 yc compute instance restart --name hyrekit
 ```
 
@@ -52,5 +52,5 @@ gunzip -c backup-YYYY-MM-DD.sql.gz | docker compose exec -T db psql -U hyrekit h
 | `app` в статусе unhealthy, в логах `name resolution` | База ещё не готова; `docker compose restart app` |
 | Запуск падает с ошибкой про SECRET_KEY | В production слабый ключ запрещён; задать случайный 64-символьный |
 | Письма не приходят | Пустой `SMTP_HOST` — ссылка подтверждения в `docker compose logs app`; локально письма в Mailpit на :8025 |
-| Разбор резюме без GigaChat хуже | Задать `GIGACHAT_CREDENTIALS`; без ключа работают правила |
+| Разборы подписаны «правила», хотя ключ задан | Открыть `GET /api/v1/llm/status` под любым входом: поле `error` по каждому провайдеру показывает отказ авторизации, сеть или лимит. Проверить ключи `GIGACHAT_CREDENTIALS`, `YANDEX_GPT_API_KEY` и `YANDEX_GPT_FOLDER_ID` |
 | Нужно пересоздать демо-данные | `docker compose down -v && docker compose up -d` — база создаётся заново |

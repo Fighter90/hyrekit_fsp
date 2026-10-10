@@ -121,7 +121,7 @@ class CandidateSettingsUpdate(BaseModel):
 
 class ResumeParseResult(BaseModel):
     fields: dict
-    source: Literal['gigachat', 'rules']
+    source: Literal['gigachat', 'yandexgpt', 'rules']
     text_length: int
 
 
