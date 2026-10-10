@@ -86,7 +86,7 @@ erDiagram
 
 ## Описание API
 
-Все методы описаны спецификацией OpenAPI, которую генерирует FastAPI: Swagger UI — `/docs`, ReDoc — `/redoc`, JSON — `/openapi.json`. Контракт для фронтенда с типами и кодами ошибок — [docs/spec/api.md](../spec/api.md).
+Все методы описаны спецификацией OpenAPI, которую генерирует FastAPI: Swagger UI — `/docs`, ReDoc — `/redoc`, JSON — `/openapi.json`, копия в репозитории — [docs/openapi.json](../openapi.json) (у каждого метода есть summary, схемы запросов и ответов). Контракт для фронтенда с типами и кодами ошибок — [docs/spec/api.md](../spec/api.md).
 
 | Группа | Префикс | Основные методы |
 | -- | -- | -- |

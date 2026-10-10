@@ -2,6 +2,12 @@
 
 Формат — [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/), версии — [SemVer](https://semver.org/lang/ru/).
 
+## [Unreleased]
+
+### Добавлено
+- Сопроводительная документация одним файлом: `docs/HyreKit_Documentation.docx` и `.pdf` собираются из `docs/guide/` командой `scripts/build_docs.py`; схемы mermaid рисует `scripts/render_diagrams.cjs` (FSP-57).
+- `docs/openapi.json` и `scripts/export_openapi.py`; CI проверяет, что спецификация совпадает с кодом (FSP-57).
+
 ## [0.1.0] — 2026-10-10
 
 Первая версия к сдаче хакатона ФСП.

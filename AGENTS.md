@@ -19,6 +19,8 @@ PYTHONPATH=src python scripts/validate.py        # валидация метод
 cd frontend && npm run lint && npm run build && npm test
 docker compose up -d --build                     # весь стек: app, db, redis, mailpit, frontend
 python scripts/smoke.py                          # дымовая проверка поднятого стенда
+PYTHONPATH=src python scripts/export_openapi.py  # docs/openapi.json; CI проверяет актуальность
+python scripts/build_docs.py                     # docs/HyreKit_Documentation.docx и .pdf из docs/guide/
 ```
 
 ## Правила
@@ -29,3 +31,5 @@ python scripts/smoke.py                          # дымовая проверк
 - Новое семейство заданий: генератор в `assessment/bank.py` на всех уровнях от `min_level`, отметка `conceptual`, тест в `tests/test_method/`, перезапуск `scripts/validate.py`.
 - Секреты — только из окружения; `.env` в git не попадает.
 - После изменения методики обновить `docs/guide/03-metodika-ocenki.md` цифрами из `docs/validation/results.md`.
+- После правки `docs/guide/` пересобрать docx и pdf (`scripts/build_docs.py`); после правки схемы mermaid — сначала `node scripts/render_diagrams.cjs`.
+- После изменения API — `scripts/export_openapi.py`, иначе CI упадёт.

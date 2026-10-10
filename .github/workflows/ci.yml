@@ -21,6 +21,8 @@ jobs:
       - run: pytest --cov=app --cov-report=term-missing:skip-covered
       - name: Validation of the assessment and matching method
         run: PYTHONPATH=src python scripts/validate.py
+      - name: docs/openapi.json matches the code
+        run: PYTHONPATH=src python scripts/export_openapi.py --check
 
   frontend:
     name: Frontend (build + tests)

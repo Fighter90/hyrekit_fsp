@@ -7,7 +7,7 @@
 | Прототип | <https://hyrekit.ru> — площадка в Yandex Cloud готовится к выкатке; до неё прототип поднимается локально одной командой ([Инструкция запуска](#инструкция-запуска)) |
 | Описание API (Swagger) | <https://hyrekit.ru/docs>, локально — <http://localhost:8000/docs> |
 | Репозиторий | <https://github.com/Fighter90/hyrekit_fsp> |
-| Сопроводительная документация | [docs/guide/README.md](docs/guide/README.md) |
+| Сопроводительная документация | [docs/guide/README.md](docs/guide/README.md), одним файлом — [docx](docs/HyreKit_Documentation.docx) и [pdf](docs/HyreKit_Documentation.pdf) |
 
 Платформа-агрегатор ИТ-вакансий с верифицированным профилем достижений участника ФСП. Хакатон Федерации спортивного программирования 2026, команда «Команда 1».
 
@@ -255,7 +255,7 @@ flowchart TB
 │   └── main.py
 ├── frontend/           # React SPA: лендинг, кабинеты кандидата и работодателя
 ├── tests/              # pytest: сквозной сценарий, методика, ядро
-├── scripts/            # dev.sh, validate.py, smoke.py
+├── scripts/            # dev.sh, validate.py, smoke.py, build_docs.py, export_openapi.py
 ├── alembic/            # миграции
 ├── deploy/yc/          # площадка Yandex Cloud: compose, Caddy
 ├── docs/
@@ -330,6 +330,8 @@ GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)) на ка�
 | Документ | Что внутри |
 | --- | --- |
 | [docs/guide/](docs/guide/README.md) | Сопроводительная документация для жюри: продукт, сценарий, методика, архитектура, запуск, технологии, команда |
+| [HyreKit_Documentation.docx](docs/HyreKit_Documentation.docx), [.pdf](docs/HyreKit_Documentation.pdf) | Те же разделы одним файлом, сборка — `python scripts/build_docs.py` |
+| [docs/openapi.json](docs/openapi.json) | Спецификация OpenAPI, выгрузка — `PYTHONPATH=src python scripts/export_openapi.py` |
 | [docs/specs/](docs/specs/README.md) | Спецификации задач |
 | [docs/spec/api.md](docs/spec/api.md) | Контракт API |
 | [docs/schema.md](docs/schema.md) | Модель данных |
