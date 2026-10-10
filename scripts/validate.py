@@ -117,8 +117,8 @@ def check_exposure(rng: random.Random, leaked: int = 200, n: int = 300) -> dict[
                     exposed += 1
                     forged[p.id] = correct_answer(item)
             exposed_per_attempt.append(exposed)
-            honest += engine.decide(engine.score_attempt(plan, own)['ability'], 'middle', None).passed
-            cheat += engine.decide(engine.score_attempt(plan, forged)['ability'], 'middle', None).passed
+            honest += engine.decide(engine.score_attempt(plan, own, grade='middle')['ability'], 'middle', None).passed
+            cheat += engine.decide(engine.score_attempt(plan, forged, grade='middle')['ability'], 'middle', None).passed
             total += 1
     by_family = {f: seen_hits[f] / seen_total[f] for f in seen_total}
 

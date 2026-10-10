@@ -136,3 +136,47 @@ def test_express_blueprint(grade: str) -> None:
     assert {p.topic for p in plan} == set(SPEC_BY_CODE['backend']['topics'])
     assert {p.level for p in plan} == {GRADE_ORDER[grade] + 1}
     assert engine.EXPRESS_SECONDS_PER_ITEM * len(plan) <= 300
+
+
+def _min_correct_to_pass(grade: str, items_per_topic: int) -> int:
+    """Сколько верных ответов (на самых лёгких заданиях плана) нужно, чтобы подтвердить грейд."""
+    plan = engine.build_blueprint('backend', grade, rng_seed=3, items_per_topic=items_per_topic)
+    bs = sorted(engine.difficulty(p.level) for p in plan)
+    for k in range(len(bs) + 1):
+        theta = engine.estimate_ability([(b, i < k) for i, b in enumerate(bs)], prior_mean=engine.cut(grade))
+        if engine.decide(theta, grade, None).passed:
+            return k
+    return len(bs) + 1
+
+
+@pytest.mark.parametrize('per_topic', [engine.ITEMS_PER_TOPIC, engine.EXPRESS_ITEMS_PER_TOPIC])
+def test_zero_correct_never_confirms_grade(per_topic: int) -> None:
+    """FSP-61: без верных ответов грейд не подтверждается ни в полном, ни в экспресс-тесте."""
+    for grade in GRADE_CODES:
+        plan = engine.build_blueprint('backend', grade, rng_seed=5, items_per_topic=per_topic)
+        scored = engine.score_attempt(plan, {}, grade=grade)
+        assert scored['correct'] == 0
+        assert not engine.decide(scored['ability'], grade, None).passed
+
+
+@pytest.mark.parametrize(('per_topic', 'need'), [(engine.ITEMS_PER_TOPIC, 6), (engine.EXPRESS_ITEMS_PER_TOPIC, 3)])
+def test_pass_requires_majority_on_every_grade(per_topic: int, need: int) -> None:
+    """FSP-61: Junior…Senior — около 60 % верных; у Intern и Lead соседние уровни упираются в края шкалы."""
+    counts = {g: _min_correct_to_pass(g, per_topic) for g in GRADE_CODES}
+    assert all(counts[g] == need for g in ('junior', 'middle', 'senior')), counts
+    assert need - 1 <= counts['intern'] <= need, counts
+    assert counts['lead'] >= need, counts
+
+
+def test_rating_grows_with_ability() -> None:
+    """FSP-61: внутри категории рейтинг монотонно растёт с θ."""
+    from types import SimpleNamespace
+
+    from app.candidates.service import test_component
+
+    values = [
+        test_component(SimpleNamespace(grade='middle', ability=engine.cut('middle') + d))  # type: ignore[arg-type]
+        for d in (-0.5, 0.0, 0.5, 1.0)
+    ]
+    assert values == sorted(values)
+    assert values[1] == pytest.approx(50, abs=0.5)
