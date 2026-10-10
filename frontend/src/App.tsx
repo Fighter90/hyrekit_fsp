@@ -9,6 +9,7 @@ import { Spinner } from './components/ui/States'
 import LandingPage from './pages/public/LandingPage'
 import AuthPage from './pages/auth/AuthPage'
 import type { Role } from './api/types'
+import VersionTag from './components/layout/VersionTag'
 
 // Кабинеты грузятся лениво — лендинг остаётся лёгким
 const AppLayout = lazyPage(() => import('./components/layout/AppLayout'))
@@ -129,6 +130,7 @@ export default function App() {
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>
+        <VersionTag />
       </Suspense>
     </ErrorBoundary>
   )

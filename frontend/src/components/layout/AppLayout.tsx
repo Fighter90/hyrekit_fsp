@@ -9,6 +9,7 @@ import Logo from '../ui/Logo'
 import { useAuth } from '../../contexts/AuthContext'
 import type { Role } from '../../api/types'
 import VerifyBanner from './VerifyBanner'
+import VersionTag from './VersionTag'
 
 interface NavItem {
   to: string
@@ -95,6 +96,7 @@ export default function AppLayout() {
             <LogOut size={18} aria-hidden />
             <span>Выйти</span>
           </button>
+          <VersionTag inline />
         </div>
       </aside>
       {open && <div className="sidebar-scrim" onClick={() => setOpen(false)} aria-hidden />}

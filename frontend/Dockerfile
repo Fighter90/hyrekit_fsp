@@ -8,6 +8,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
+# Коммит для подписи версии в углу интерфейса (в образе нет .git)
+ARG APP_COMMIT=dev
+ENV APP_COMMIT=$APP_COMMIT
 RUN npm run build
 
 # Production stage — nginx (mirror.gcr.io for Russia)
