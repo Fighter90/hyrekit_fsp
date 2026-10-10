@@ -16,7 +16,9 @@ Linear: FSP-36 (разбор решений Arena), FSP-22 (разбор рез�
 
 ## Правила и числа
 - Порядок опроса задаёт `LLM_PROVIDERS` (по умолчанию `gigachat,yandexgpt`). Провайдер без ключа пропускается.
-- Ошибка провайдера (HTTP, авторизация, ответ без JSON) не показывается пользователю: запрос уходит следующему, затем правилам.
+- Ошибка провайдера (HTTP, авторизация, ответ без JSON, тематический фильтр GigaChat) не показывается пользователю: запрос уходит следующему, затем правилам.
+- JSON из ответа модели разбирается терпимо: снимаются блоки ```json, допускаются переводы строк внутри строк, лишние запятые и одинарные кавычки.
+- Последняя ошибка каждого провайдера в рабочих запросах хранится в памяти процесса и показывается в статусе как `last_error`: проверочный запрос короткий и может пройти, когда разбор кода падает.
 - Модель не генерирует и не проверяет задания теста, не влияет на грейд и подборку ([ADR 0002](../decisions/0002-gigachat.md)).
 - Статус провайдеров кэшируется на 5 минут (`PING_TTL` в `src/app/llm/chain.py`), чтобы страница статуса не тратила лимит.
 - Ключи задаются только переменными окружения и не пишутся в лог.
@@ -33,14 +35,16 @@ Linear: FSP-36 (разбор решений Arena), FSP-22 (разбор рез�
 - WHEN первый провайдер падает с ошибкой THE SYSTEM SHALL повторить запрос у следующего настроенного провайдера.
 - WHEN ни один провайдер не ответил или не настроен THE SYSTEM SHALL вернуть результат правил с `source = rules`.
 - WHEN YandexGPT отвечает 401 или 403 THE SYSTEM SHALL считать это ошибкой авторизации и перейти дальше по цепочке.
-- WHEN вошедший пользователь запрашивает `GET /api/v1/llm/status` THE SYSTEM SHALL вернуть по каждому провайдеру `configured`, `ok`, `error`, `latency_ms` и активный провайдер.
+- WHEN вошедший пользователь запрашивает `GET /api/v1/llm/status` THE SYSTEM SHALL вернуть по каждому провайдеру `configured`, `ok`, `error`, `latency_ms`, `last_error` (если была) и активный провайдер.
+- WHEN модель вернула JSON в блоке кода, с переводом строки внутри строки, лишней запятой или одинарными кавычками THE SYSTEM SHALL разобрать его без перехода к следующему провайдеру.
+- WHEN GigaChat завершил ответ по тематическому фильтру (`finish_reason = blacklist`) THE SYSTEM SHALL считать это ошибкой и перейти к следующему провайдеру.
 - WHEN запрос статуса без токена THE SYSTEM SHALL ответить 401.
 
 ## Интерфейсы
 - `app.llm.chain.get_llm() -> LLMChain` — `is_configured`, `complete()`, `complete_json()`, `provider`.
 - `app.llm.gigachat.GigaChatClient`, `app.llm.yandexgpt.YandexGPTClient` — общий протокол `Provider`.
-- `GET /api/v1/llm/status` → `{active, fallback, providers: [{provider, title, configured, ok, error, latency_ms}]}`.
+- `GET /api/v1/llm/status` → `{active, fallback, providers: [{provider, title, configured, ok, error, latency_ms, last_error}]}`.
 - YandexGPT: `POST https://llm.api.cloud.yandex.net/foundationModels/v1/completion`, заголовки `Authorization: Api-Key …` и `x-folder-id`, модель `gpt://<folder>/<YANDEX_GPT_MODEL>`.
 
 ## План тестов
-`tests/test_llm_chain.py`: порядок цепочки и переход к резервному провайдеру, переход к правилам, запрос и ошибки клиента YandexGPT (через `httpx.MockTransport`), эндпоинт статуса с токеном и без.
+`tests/test_llm_chain.py`: порядок цепочки и переход к резервному провайдеру, переход к правилам, запрос и ошибки клиента YandexGPT (через `httpx.MockTransport`), эндпоинт статуса с токеном и без, терпимый разбор JSON, `last_error` в статусе, фильтр GigaChat.

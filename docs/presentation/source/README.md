@@ -6,7 +6,8 @@
 pip install python-pptx pillow qrcode
 cd docs/presentation/source
 python3 assets.py img ../assets ../assets          # аватары, QR-коды, кадрирование скриншотов
-python3 build.py "<путь к шаблону>.pptx" img ../HyreKit_pitch.pptx
+python3 build.py "<путь к шаблону>.pptx" img full.pptx
+python3 compress.py full.pptx ../HyreKit_pitch.pptx  # фоны шаблона 4K → 2560 px, иначе файл весит 14 МБ
 soffice --headless --convert-to pdf --outdir .. ../HyreKit_pitch.pptx
 ```
 
