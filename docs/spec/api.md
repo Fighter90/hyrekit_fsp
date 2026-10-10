@@ -286,7 +286,7 @@ interface InvitationInput { candidate_id: string; vacancy_id?: string | null; ti
 
 | Метод | Путь | Роль | Описание |
 |---|---|---|---|
-| GET | `/llm/status` | все вошедшие | `{active, fallback, providers: [{provider, title, configured, ok, error, latency_ms}]}`: `active` — первый ответивший провайдер (`gigachat`, `yandexgpt`) или `null`, тогда `fallback = "rules"`; кэш 5 минут |
+| GET | `/llm/status` | все вошедшие | `{active, fallback, providers: [{provider, title, configured, ok, error, latency_ms, last_error}]}`: `last_error` — последняя ошибка провайдера в рабочих запросах (есть, только если была); `active` — первый ответивший провайдер (`gigachat`, `yandexgpt`) или `null`, тогда `fallback = "rules"`; кэш 5 минут |
 
 ## Служебное
 

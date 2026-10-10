@@ -302,7 +302,7 @@ flowchart TB
 - GigaChat — проект GigaChat API в [личном кабинете developers.sber.ru](https://developers.sber.ru/studio), Authorization Key в `GIGACHAT_CREDENTIALS`, скоуп `GIGACHAT_API_PERS` для физлиц.
 - YandexGPT — сервисный аккаунт с ролью `ai.languageModels.user` в каталоге Yandex Cloud, API-ключ в `YANDEX_GPT_API_KEY`, ID каталога в `YANDEX_GPT_FOLDER_ID`.
 
-Проверка: `GET /api/v1/llm/status` под любым входом показывает по каждому провайдеру, задан ли ключ, ответил ли проверочный запрос, ошибку и задержку (кэш 5 минут). Спека — [docs/specs/llm-provajdery.md](docs/specs/llm-provajdery.md).
+Проверка: `GET /api/v1/llm/status` под любым входом показывает по каждому провайдеру, задан ли ключ, ответил ли проверочный запрос, ошибку, задержку (кэш 5 минут) и последнюю ошибку в рабочих запросах. Спека — [docs/specs/llm-provajdery.md](docs/specs/llm-provajdery.md).
 
 ## Структура репозитория
 

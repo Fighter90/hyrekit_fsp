@@ -111,3 +111,50 @@ async def test_status_endpoint(auth_client: AsyncClient, monkeypatch: pytest.Mon
 async def test_status_requires_auth(client: AsyncClient) -> None:
     r = await client.get('/api/v1/llm/status')
     assert r.status_code == 401
+
+
+@pytest.mark.parametrize(
+    ('raw', 'expected'),
+    [
+        ('```json\n{"summary": "ok", "points": ["a"]}\n```', {'summary': 'ok', 'points': ['a']}),
+        ('{"summary": "строка\nс переводом", "points": []}', {'summary': 'строка\nс переводом', 'points': []}),
+        ('{"summary": "ok", "points": ["a", "b",],}', {'summary': 'ok', 'points': ['a', 'b']}),
+        ("{'summary': 'ok', 'points': ['a']}", {'summary': 'ok', 'points': ['a']}),
+    ],
+)
+def test_parse_json_tolerates_model_quirks(raw: str, expected: dict[str, Any]) -> None:
+    assert chain.parse_json(raw, 'GigaChat') == expected
+
+
+async def test_last_error_is_kept_for_status(monkeypatch: pytest.MonkeyPatch) -> None:
+    chain.last_errors.clear()
+    llm = LLMChain([_Fake('gigachat', 'не json'), _Fake('yandexgpt', '{"x": 2}')])
+    assert await llm.complete_json(system='s', user='u') == {'x': 2}
+    assert 'без JSON' in chain.last_errors['gigachat']['error']
+
+    monkeypatch.setattr(chain, 'LLMChain', lambda: LLMChain([_Fake('gigachat', 'ok')]))
+    monkeypatch.setattr(chain, '_status_cache', None)
+    rows = await chain.status(force=True)
+    assert rows[0]['ok']
+    assert 'без JSON' in rows[0]['last_error']
+    chain.last_errors.clear()
+
+
+async def test_gigachat_blacklist_is_an_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    from types import SimpleNamespace
+
+    from app.core.exceptions import LLMResponseError
+    from app.llm.gigachat import GigaChatClient
+
+    client = GigaChatClient()
+    client._credentials = 'x'
+    reply = SimpleNamespace(
+        choices=[SimpleNamespace(finish_reason='blacklist', message=SimpleNamespace(content='Не люблю менять тему'))]
+    )
+
+    async def achat(_payload: Any) -> Any:
+        return reply
+
+    client._client = SimpleNamespace(achat=achat)
+    with pytest.raises(LLMResponseError):
+        await client.complete(system='s', user='u')

@@ -8,17 +8,13 @@
 
 from __future__ import annotations
 
-import json
 import logging
-import re
 from typing import Any
 
 from app.core.config import get_settings
 from app.core.exceptions import LLMAuthError, LLMProviderUnavailable, LLMResponseError
 
 logger = logging.getLogger(__name__)
-
-_JSON_BLOCK = re.compile(r'\{.*\}', re.S)
 
 
 class GigaChatClient:
@@ -80,21 +76,17 @@ class GigaChatClient:
             if '401' in text or 'Unauthorized' in text:
                 raise LLMAuthError('gigachat') from exc
             raise LLMProviderUnavailable('gigachat') from exc
-        return str(response.choices[0].message.content)
+        choice = response.choices[0]
+        if getattr(choice, 'finish_reason', None) == 'blacklist':
+            # тематический фильтр GigaChat: текст ответа — шаблонный отказ
+            raise LLMResponseError('GigaChat отказался отвечать (тематический фильтр)')
+        return str(choice.message.content)
 
     async def complete_json(self, *, system: str, user: str) -> dict[str, Any]:
         """Запрос, ответ на который обязан быть JSON-объектом."""
-        raw = await self.complete(system=system, user=user)
-        match = _JSON_BLOCK.search(raw)
-        if not match:
-            raise LLMResponseError('GigaChat вернул ответ без JSON')
-        try:
-            data = json.loads(match.group(0))
-        except json.JSONDecodeError as exc:
-            raise LLMResponseError('GigaChat вернул некорректный JSON') from exc
-        if not isinstance(data, dict):
-            raise LLMResponseError('Ожидался JSON-объект')
-        return data
+        from app.llm.chain import parse_json
+
+        return parse_json(await self.complete(system=system, user=user), self.title)
 
 
 def get_llm() -> Any:
