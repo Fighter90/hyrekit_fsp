@@ -1,0 +1,66 @@
+/* ============ Шрифты (self-hosted, SIL OFL — см. /fonts/OFL-*.txt) ============ */
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/JetBrainsMono-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'TDAText';
+  src: url('/fonts/TDAText.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ============ Токены фирменного стиля ФСП ============ */
+:root {
+  color-scheme: dark;
+
+  /* бренд */
+  --blue: #402fff;          /* акцентный/главный */
+  --blue-bright: #8173ff;   /* тот же тон, осветлён для текста на тёмном фоне (контраст ≥ 4.5) */
+  --blue-deep: #0a006b;     /* digital-акцент */
+  --red: #ec1d35;           /* акцентный/лого */
+  --red-bright: #ff5468;
+  --white: #ededed;
+  --logo-gray: #c8c9ca;
+
+  /* серые */
+  --g-900: #1b1c21;
+  --g-800: #2d2e37;
+  --g-700: #3a3c46;
+  --g-400: #9b9c9e;
+  --g-200: #d9d9d9;
+
+  /* семантика */
+  --bg: var(--g-900);
+  --bg-elev: #212229;
+  --surface: rgba(45, 46, 55, 0.55);
+  --surface-solid: var(--g-800);
+  --surface-hi: var(--g-700);
+  --line: rgba(237, 237, 237, 0.09);
+  --line-strong: rgba(237, 237, 237, 0.18);
+  --text: var(--white);
+  --text-soft: var(--g-200);
+  --muted: #a4a5a8;
+  --success: #2fd38a;
+  --warning: #ffb547;
+  --danger: var(--red-bright);
+
+  --font: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --display: 'TDAText', 'JetBrains Mono', ui-monospace, monospace;
+
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r: 10px;
+  --r-lg: 16px;
+
+  --shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
+  --glow-blue: 0 0 0 1px rgba(64, 47, 255, 0.5), 0 8px 40px -8px rgba(64, 47, 255, 0.55);
+  --glow-red: 0 0 0 1px rgba(236, 29, 53, 0.45), 0 8px 40px -8px rgba(236, 29, 53, 0.5);
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --sidebar-w: 256px;
+}
