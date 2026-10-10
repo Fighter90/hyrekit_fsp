@@ -31,7 +31,7 @@ from app.core.database import get_session
 from app.core.exceptions import BadRequest, Conflict, NotFound
 from app.core.roles import require_candidate
 from app.employers.models import Vacancy
-from app.employers.service import vacancy_out
+from app.employers.service import applications_count, vacancy_out
 from app.fsp.provider import FSP_ID_RE, get_provider
 from app.hiring.models import Application, Invitation, Status
 from app.hiring.service import application_out, invitation_out
@@ -301,7 +301,8 @@ async def vacancies(
             for v in items
             if ql in v.title.lower() or ql in v.description.lower() or any(ql in s.lower() for s in v.stack or [])
         ]
-    return [vacancy_out(v) for v in items]
+    counts = await applications_count(session, [v.id for v in items])
+    return [vacancy_out(v, counts.get(v.id, 0)) for v in items]
 
 
 class ApplyRequest(BaseModel):

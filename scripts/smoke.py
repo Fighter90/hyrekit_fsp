@@ -167,7 +167,9 @@ def main() -> int:
     step('Отклик на вакансию', r.status_code == 200, str(r.status_code))
     apps = c.get('/api/v1/employer/applications', headers=emp).json()
     step('Работодатель видит отклик', any(a['candidate']['contacts_unlocked'] for a in apps))
-    chs = c.get('/api/v1/candidate/challenges', headers=cand).json()
+    # На живом стенде задания публикуют и другие компании: берём задание демо-работодателя
+    own = {x['id'] for x in c.get('/api/v1/employer/challenges', headers=emp).json()}
+    chs = [x for x in c.get('/api/v1/candidate/challenges', headers=cand).json() if x['id'] in own]
     r = c.post(
         f'/api/v1/candidate/challenges/{chs[0]["id"]}/submit',
         headers=cand,

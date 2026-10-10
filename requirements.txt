@@ -24,7 +24,7 @@ PyJWT==2.10.1
 bcrypt==4.2.1
 
 # --- Encryption ---
-cryptography>=42.0
+cryptography==50.0.1
 
 # --- HTTP Client ---
 httpx==0.28.1

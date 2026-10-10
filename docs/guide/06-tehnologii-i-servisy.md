@@ -24,6 +24,7 @@
 | reportlab | 5.0.1 | BSD | Генерация PDF-профиля |
 | gigachat | 0.1.40 | MIT | Клиент GigaChat |
 | httpx | 0.28.1 | BSD-3 | HTTP-клиент: YandexGPT, OIDC ФСП ID |
+| cryptography | 50.0.1 | Apache-2.0 / BSD | Шифрование персональных данных в базе (`core/encryption.py`) |
 | tenacity | 9.0.0 | Apache-2.0 | Повторы внешних вызовов |
 | structlog | 24.4.0 | MIT / Apache-2.0 | Логи |
 

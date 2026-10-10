@@ -11,7 +11,7 @@
 | Swagger UI | <https://hyrekit.ru/docs> |
 | Репозиторий | <https://github.com/Fighter90/hyrekit_fsp> |
 | Презентация | [pptx](presentation/HyreKit_pitch.pptx), [pdf](presentation/HyreKit_pitch.pdf) |
-| Демо-видео | [HyreKit_demo.mp4](presentation/HyreKit_demo.mp4), 3 минуты: весь сценарий с титрами |
+| Демо-видео | [HyreKit_demo.mp4](presentation/HyreKit_demo.mp4), 3 минуты с титрами: экспресс-тест, Code Arena, ФСП ID, подборка, приглашение и ответ кандидата; регистрацию, опрос и отклик жюри проходит на стенде |
 | Документация | [docs/guide/](guide/README.md), одним файлом — [docx](HyreKit_Documentation.docx) и [pdf](HyreKit_Documentation.pdf) |
 
 Если стенд недоступен, тот же прототип поднимается локально одной командой `docker compose up -d --build` и открывается на <http://localhost:3000> — подробно в [README](../README.md#инструкция-запуска).

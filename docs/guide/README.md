@@ -12,6 +12,8 @@
 | Описание API (Swagger) | <https://hyrekit.ru/docs>, локально — <http://localhost:8000/docs> |
 | Одним файлом | [HyreKit_Documentation.docx](../HyreKit_Documentation.docx) и [.pdf](../HyreKit_Documentation.pdf) — собраны из этих разделов командой `python scripts/build_docs.py` |
 | Спецификация OpenAPI | [docs/openapi.json](../openapi.json) — выгружается `scripts/export_openapi.py`, CI проверяет, что файл совпадает с кодом |
+| Презентация | [HyreKit_pitch.pdf](../presentation/HyreKit_pitch.pdf) и [.pptx](../presentation/HyreKit_pitch.pptx) |
+| Демо-видео | [HyreKit_demo.mp4](../presentation/HyreKit_demo.mp4) — экспресс-тест, Code Arena, ФСП ID, подборка и приглашение |
 | Репозиторий | <https://github.com/Fighter90/hyrekit_fsp> — код открыт, без обфускации, зависимости закреплены в `requirements.txt` и `frontend/package-lock.json` |
 
 ## Разделы
@@ -29,7 +31,7 @@
 ## Как читать за 10 минут
 
 1. [Раздел 1](01-produkt.md), абзацы «Проблема» и «Обратная механика» — 2 минуты.
-2. [Раздел 3](03-metodika-ocenki.md), «Почему тест не утекает» и «Результаты валидации» — 5 минут.
+2. [Раздел 3](03-metodika-ocenki.md), «Почему не единый набор и не задания от нейросети» и «Результаты валидации» — 5 минут.
 3. [Раздел 5](05-zapusk-i-demo.md), «Демо за 5 минут» — пройти руками.
 
 Полные цифры валидации пересчитываются командой `PYTHONPATH=src python scripts/validate.py` и лежат в [docs/validation/results.md](../validation/results.md).
