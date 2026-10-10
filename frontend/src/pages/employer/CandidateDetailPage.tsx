@@ -15,6 +15,7 @@ import FspPanel from '../../components/settings/FspPanel'
 import InviteModal from '../../components/employer/InviteModal'
 import FavoriteButton from '../../components/employer/FavoriteButton'
 import { experienceLabel, formatSalary, workFormatLabel } from '../../lib/format'
+import { invitationPending } from '../../lib/candidate'
 
 export default function CandidateDetailPage() {
   const { id = '' } = useParams()
@@ -28,7 +29,7 @@ export default function CandidateDetailPage() {
     api.getEmployerVacancies().then(setVacancies).catch(() => undefined)
   }, [])
 
-  const invited = !!c?.invitation_status && c.invitation_status !== 'declined'
+  const invited = invitationPending(c?.invitation_status)
 
   return (
     <>

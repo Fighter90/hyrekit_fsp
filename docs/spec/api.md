@@ -110,7 +110,7 @@ interface CandidateSettingsUpdate {
   consent?: boolean            // true выставляет consent_given_at, false снимает
   fsp_id?: string | null       // привязка/отвязка ФСП ID
 }
-interface ResumeParseResult { fields: CandidateProfileUpdate; source: 'gigachat' | 'rules'; text_length: number }
+interface ResumeParseResult { fields: CandidateProfileUpdate; source: 'gigachat' | 'yandexgpt' | 'rules'; text_length: number }
 interface FspAchievement { event: string; discipline: string; level: string; place: number | null;
   year: number; role: string | null; relevant_to: string[] }
 interface FspSummary { fsp_id: string; athlete_name: string | null; achievements: FspAchievement[];
@@ -271,6 +271,12 @@ interface InvitationInput { candidate_id: string; vacancy_id?: string | null; ti
 | POST | `/api/v1/fsp-id/token` | `grant_type=authorization_code`, `code`, `redirect_uri`, `code_verifier`, клиент через `client_secret_post` или `client_secret_basic` → `{id_token, access_token}`; код одноразовый, 120 секунд |
 | GET | `/api/v1/fsp-id/userinfo` | Bearer access-токен → claims участника (`sub`, `fsp_id`, `name`, `email`) |
 | GET | `/api/v1/fsp-id/jwks` | `{keys: []}`: id_token подписан HS256 секретом клиента |
+
+## Модели LLM `/llm`
+
+| Метод | Путь | Роль | Описание |
+|---|---|---|---|
+| GET | `/llm/status` | все вошедшие | `{active, fallback, providers: [{provider, title, configured, ok, error, latency_ms}]}`: `active` — первый ответивший провайдер (`gigachat`, `yandexgpt`) или `null`, тогда `fallback = "rules"`; кэш 5 минут |
 
 ## Служебное
 

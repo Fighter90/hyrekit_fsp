@@ -1,4 +1,4 @@
-import type { CandidateProfile, Invitation } from '../api/types'
+import type { CandidateProfile, Invitation, InvitationStatus } from '../api/types'
 import type { Step } from '../components/ui/Stepper'
 
 /** Шаги воронки кандидата вычисляются из профиля и приглашений. */
@@ -12,3 +12,11 @@ export function candidateSteps(p: CandidateProfile, invitations: Invitation[]): 
   ]
 }
 
+
+/**
+ * Ждёт ли кандидат ответа на приглашение компании. Только в этом случае новое приглашение
+ * отправить нельзя — бэкенд отвечает 409; после принятия или отказа можно пригласить снова.
+ */
+export function invitationPending(status: InvitationStatus | null | undefined): boolean {
+  return status === 'sent' || status === 'viewed'
+}

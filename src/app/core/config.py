@@ -51,6 +51,11 @@ class Settings(BaseSettings):
     gigachat_credentials: str = ''
     gigachat_scope: str = 'GIGACHAT_API_PERS'
     gigachat_model: str = 'GigaChat'
+    # YandexGPT (Yandex AI Studio) — резервный провайдер, если GigaChat недоступен
+    yandex_gpt_api_key: str = ''
+    yandex_gpt_folder_id: str = ''
+    yandex_gpt_model: str = 'yandexgpt-lite/latest'
+    llm_providers: str = 'gigachat,yandexgpt'  # порядок опроса; первый ответивший даёт результат
 
     # --- Демо и публичный адрес ---
     seed_demo: bool = True  # демо-аккаунты и синтетический банк кандидатов при старте
