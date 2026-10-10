@@ -10,3 +10,4 @@
 | PyMuPDF | `requirements.txt` | AGPL-3.0 | Разбор PDF-резюме; из-за неё проект распространяется под совместимой GPL-3.0 |
 | reportlab | `requirements.txt` | BSD | PDF-профиль кандидата |
 | GigaChat SDK | `requirements.txt` | MIT | Клиент API GigaChat; доступ по ключу пользователя |
+| YandexGPT API | — (REST через `httpx`) | Условия Yandex Cloud | Резервная модель; доступ по API-ключу владельца площадки |

@@ -4,7 +4,7 @@
 #   YC_SA_KEY_JSON='{...}' TIMEWEB_TOKEN=... deploy/yc/deploy.sh          # первая выкатка или обновление
 #   SKIP_DNS=1 deploy/yc/deploy.sh                                       # без изменения DNS
 #   SKIP_BUILD=1 TAG=... deploy/yc/deploy.sh                             # образы с этим тегом уже в реестре
-#   EXTRA_ENV_FILE=prod.env deploy/yc/deploy.sh                       # SMTP_*, GIGACHAT_* для приложения (в метаданные ВМ)
+#   EXTRA_ENV_FILE=prod.env deploy/yc/deploy.sh                       # SMTP_*, GIGACHAT_*, YANDEX_GPT_* для приложения (в метаданные ВМ)
 #   SSH_PUBKEY=~/.ssh/id_ed25519.pub deploy/yc/deploy.sh                 # доступ по SSH для отладки (необязательно)
 #
 # Повторный запуск идемпотентен: существующие ресурсы переиспользуются, ВМ получает новый тег и перезапускается.

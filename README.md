@@ -4,7 +4,7 @@
 
 | Что | Адрес |
 | --- | --- |
-| Прототип | <https://hyrekit.ru> — площадка в Yandex Cloud готовится к выкатке; до неё прототип поднимается локально одной командой ([Инструкция запуска](#инструкция-запуска)) |
+| Прототип | <https://hyrekit.ru> — площадка в Yandex Cloud; локально прототип поднимается одной командой ([Инструкция запуска](#инструкция-запуска)) |
 | Описание API (Swagger) | <https://hyrekit.ru/docs>, локально — <http://localhost:8000/docs> |
 | Репозиторий | <https://github.com/Fighter90/hyrekit_fsp> |
 | Сопроводительная документация | [docs/guide/README.md](docs/guide/README.md), одним файлом — [docx](docs/HyreKit_Documentation.docx) и [pdf](docs/HyreKit_Documentation.pdf) |
@@ -24,9 +24,11 @@
 > - достижения ФСП из эмулятора реестра, рейтинг внутри категории;
 > - демо-аккаунты и синтетический банк из 120 кандидатов, подтверждение почты через Mailpit.
 >
-> С ключом GigaChat: разбор PDF-резюме и оценка ответов на короткие задания моделью; без ключа — правила.
+> С ключами LLM (GigaChat, в резерве YandexGPT): разбор PDF-резюме, оценка ответов на короткие задания и разбор решений Code Arena моделью; без ключей — правила. Все интеграции — в разделе [Интеграции](#интеграции).
 >
-> Не входит в MVP: вход через ФСП ID (Keycloak) и реальный реестр ФСП, модерация работодателей, интеграция с ATS — схемы в [docs/guide/04-arhitektura.md](docs/guide/04-arhitektura.md).
+> Вход и привязка через ФСП ID по OpenID Connect: встроенный тестовый провайдер, Keycloak ФСП подключается переменными `FSP_OIDC_*`.
+>
+> Не входит в MVP: реальный реестр ФСП, модерация работодателей, интеграция с ATS — схемы в [docs/guide/04-arhitektura.md](docs/guide/04-arhitektura.md).
 >
 > История версий — [CHANGELOG.md](CHANGELOG.md).
 
@@ -44,6 +46,7 @@
 - [Переменные окружения](#переменные-окружения)
 - [Команды](#команды)
 - [Архитектура](#архитектура)
+- [Интеграции](#интеграции)
 - [Структура репозитория](#структура-репозитория)
 - [Как ведётся разработка](#как-ведётся-разработка)
 - [Тестирование и качество](#тестирование-и-качество)
@@ -126,7 +129,7 @@ docker compose up -d --build
 
 ### Границы MVP
 
-Реестр ФСП эмулируется детерминированно по ФСП ID (ID на 0 — участник без истории); замена на реальный API — одна реализация интерфейса `FspProvider`. GigaChat не генерирует и не проверяет задания теста: сопоставимость сложности важнее.
+Реестр ФСП эмулируется детерминированно по ФСП ID (ID на 0 — участник без истории); замена на реальный API — одна реализация интерфейса `FspProvider`. Модель (GigaChat или YandexGPT) не генерирует и не проверяет задания теста: сопоставимость сложности важнее.
 
 ## Визуальная система
 
@@ -203,7 +206,12 @@ cd frontend && npm ci && npm run dev          # http://localhost:5173, /api пр
 | `REDIS_URL` | `redis://localhost:6379/0` | Лимиты запросов |
 | `ENVIRONMENT` | `development` | `production` включает строгие проверки |
 | `CORS_ORIGINS` | localhost | Разрешённые адреса фронтенда |
-| `GIGACHAT_CREDENTIALS` | пусто | Ключ GigaChat; без него работают правила |
+| `GIGACHAT_CREDENTIALS` | пусто | Authorization Key GigaChat (developers.sber.ru); без ключа провайдер пропускается |
+| `GIGACHAT_SCOPE`, `GIGACHAT_MODEL` | `GIGACHAT_API_PERS`, `GigaChat` | Параметры GigaChat |
+| `YANDEX_GPT_API_KEY` | пусто | API-ключ Yandex AI Studio (сервисный аккаунт с ролью `ai.languageModels.user`); резервный провайдер |
+| `YANDEX_GPT_FOLDER_ID` | пусто | ID каталога Yandex Cloud для YandexGPT |
+| `YANDEX_GPT_MODEL` | `yandexgpt-lite/latest` | Модель YandexGPT |
+| `LLM_PROVIDERS` | `gigachat,yandexgpt` | Порядок опроса провайдеров; если не ответил никто, работают правила |
 | `SEED_DEMO` | `true` | Демо-аккаунты и синтетический банк при старте |
 | `CALIBRATION_INTERVAL_MINUTES` | `60` | Как часто пересчитывать статус семейств заданий и исключать утёкшие (FSP-33); `0` — выключено |
 | `GUEST_MODE` | `true` | Экспресс-тест для жюри без регистрации (`POST /api/v1/auth/guest`) |
@@ -241,6 +249,7 @@ flowchart TB
   API --> Redis[(Redis 7)]
   API -->|SMTP| Mail[Почта / Mailpit]
   API -->|по ключу| Giga[GigaChat]
+  API -.->|резерв, по ключу| YGPT[YandexGPT]
   API -.->|FspProvider| FSP[Реестр ФСП: эмулятор]
 ```
 
@@ -249,9 +258,40 @@ flowchart TB
 | Фронтенд | React 19, TypeScript, Vite 6, vitest |
 | API | FastAPI, Pydantic v2, async SQLAlchemy 2, Alembic |
 | Данные | PostgreSQL 16 (в разработке SQLite), Redis 7 |
-| LLM | GigaChat |
+| LLM | GigaChat, резерв YandexGPT, без ключей — правила |
 
 Методика (`assessment.bank`, `assessment.engine`, `matching.service`) — чистые функции без базы: их проверяют и юнит-тесты, и скрипт валидации. Подробно — [docs/guide/04-arhitektura.md](docs/guide/04-arhitektura.md), модель данных — [docs/schema.md](docs/schema.md), контракт API — [docs/spec/api.md](docs/spec/api.md).
+
+## Интеграции
+
+| Интеграция | Что даёт | Как подключена | Без неё |
+| --- | --- | --- | --- |
+| GigaChat (Сбер) | Разбор резюме, оценка ответов на короткие задания, разбор решений Code Arena | SDK `gigachat`, `src/app/llm/gigachat.py`; ключ `GIGACHAT_CREDENTIALS` | Запрос уходит в YandexGPT |
+| YandexGPT (Yandex AI Studio) | Те же функции, резервный провайдер | REST Foundation Models API, `src/app/llm/yandexgpt.py`; `YANDEX_GPT_API_KEY`, `YANDEX_GPT_FOLDER_ID` | Работают правила |
+| ФСП ID (OpenID Connect) | Вход и подтверждённая привязка ФСП ID | Authorization Code + PKCE, `src/app/fsp/oidc.py`; `FSP_OIDC_*` | Встроенный тестовый провайдер `/api/v1/fsp-id` |
+| Реестр достижений ФСП | Достижения и балл ФСП в профиле и подборке | Интерфейс `FspProvider`, `src/app/fsp/provider.py` | Детерминированный эмулятор по ФСП ID |
+| Почта (SMTP) | Письмо для подтверждения адреса | `src/app/core/mailer.py`; `SMTP_*` | Ссылка подтверждения пишется в лог; локально письма в Mailpit |
+| Yandex Cloud | ВМ Compute Cloud, Container Registry, статический IP, снимки диска | `deploy/yc/deploy.sh` | Локальный запуск через Docker Compose |
+| DNS Timeweb и Let's Encrypt | Домен hyrekit.ru и сертификат | `deploy/yc/deploy.sh`, Caddy | Доступ по IP |
+
+### LLM: GigaChat, YandexGPT и правила
+
+Все вызовы модели идут через цепочку `src/app/llm/chain.py`. Запрос получает первый настроенный провайдер из `LLM_PROVIDERS` (по умолчанию `gigachat,yandexgpt`). Если он не ответил, отказал в авторизации или вернул ответ без JSON, запрос повторяется у следующего. Если не ответил никто, результат строят правила. Пользователь всегда получает ответ, а подпись в интерфейсе и поле `source` в API показывают, кто его написал: `gigachat`, `yandexgpt` или `rules`.
+
+| Где | Что пишет модель | Что делают правила |
+| --- | --- | --- |
+| Разбор резюме (`candidates.resume_parser`) | ФИО, контакты, стек, роли, стаж, софт-скиллы в JSON, сливается с правилами | Регулярные выражения и словари технологий |
+| Короткие задания (`challenges.service`) | Балл по рубрике и отзыв | Эвристика по полноте и ключевым словам |
+| Разбор решения Code Arena (`arena.feedback`) | Где и почему упало решение, до пяти замечаний по коду | Шаблоны по вердикту, типичные ошибки задачи, статический разбор кода |
+
+Модель не генерирует и не проверяет задания теста, не влияет на грейд и подборку ([ADR 0002](docs/decisions/0002-gigachat.md)).
+
+Как получить ключи:
+
+- GigaChat — проект GigaChat API в [личном кабинете developers.sber.ru](https://developers.sber.ru/studio), Authorization Key в `GIGACHAT_CREDENTIALS`, скоуп `GIGACHAT_API_PERS` для физлиц.
+- YandexGPT — сервисный аккаунт с ролью `ai.languageModels.user` в каталоге Yandex Cloud, API-ключ в `YANDEX_GPT_API_KEY`, ID каталога в `YANDEX_GPT_FOLDER_ID`.
+
+Проверка: `GET /api/v1/llm/status` под любым входом показывает по каждому провайдеру, задан ли ключ, ответил ли проверочный запрос, ошибку и задержку (кэш 5 минут). Спека — [docs/specs/llm-provajdery.md](docs/specs/llm-provajdery.md).
 
 ## Структура репозитория
 
@@ -362,7 +402,7 @@ GitHub Actions ([.github/workflows/ci.yml](.github/workflows/ci.yml)) на ка�
 | ADR | Решение |
 | --- | --- |
 | [0001](docs/decisions/0001-stek.md) | Стек: FastAPI, PostgreSQL, React |
-| [0002](docs/decisions/0002-gigachat.md) | GigaChat как LLM, правила без ключа |
+| [0002](docs/decisions/0002-gigachat.md) | GigaChat как LLM, YandexGPT в резерве, правила без ключей |
 | [0003](docs/decisions/0003-parametricheskie-zadaniya-i-rasch.md) | Параметрические задания и модель Раша |
 | [0004](docs/decisions/0004-podbor-obyasnimyi-ball.md) | Подбор по объяснимому баллу |
 | [0005](docs/decisions/0005-fsp-provider.md) | Интерфейс реестра ФСП и эмулятор |

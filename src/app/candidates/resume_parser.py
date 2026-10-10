@@ -243,9 +243,9 @@ async def parse_resume_text(text: str) -> tuple[dict[str, Any], str]:
     try:
         data = await llm.complete_json(system=PARSE_PROMPT, user=text[:12000])
     except Exception:
-        logger.warning('GigaChat не смог разобрать резюме, используем правила', exc_info=True)
+        logger.warning('LLM не смогла разобрать резюме, используем правила', exc_info=True)
         return fields, 'rules'
     merged = {**fields, **_clean_llm(data)}
     if fields.get('stack') and merged.get('stack'):
         merged['stack'] = list(dict.fromkeys([*merged['stack'], *fields['stack']]))
-    return merged, 'gigachat'
+    return merged, getattr(llm, 'provider', None) or 'gigachat'

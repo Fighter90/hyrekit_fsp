@@ -24,6 +24,9 @@ _JSON_BLOCK = re.compile(r'\{.*\}', re.S)
 class GigaChatClient:
     """Тонкая обёртка над официальным SDK `gigachat`."""
 
+    name = 'gigachat'
+    title = 'GigaChat'
+
     def __init__(self, model: str | None = None) -> None:
         settings = get_settings()
         self._credentials = settings.gigachat_credentials
@@ -94,6 +97,8 @@ class GigaChatClient:
         return data
 
 
-def get_llm() -> GigaChatClient:
-    """Фабрика клиента (удобно подменять в тестах)."""
-    return GigaChatClient()
+def get_llm() -> Any:
+    """Цепочка провайдеров: GigaChat, затем YandexGPT (см. `app.llm.chain`)."""
+    from app.llm.chain import get_llm as chain
+
+    return chain()
