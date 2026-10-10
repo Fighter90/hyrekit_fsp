@@ -17,3 +17,4 @@
 | [Экспресс-тест для жюри](fsp-32-ekspress-test.md) | FSP-32 |
 | [Честный порог грейда](fsp-61-chestnyj-porog.md) | FSP-61 |
 | [Валидация](fsp-54-55-validaciya.md) | FSP-54, FSP-55 |
+| [Питч и инструкция для жюри](fsp-58-pitch.md) | FSP-58 |

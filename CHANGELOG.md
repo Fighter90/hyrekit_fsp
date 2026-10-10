@@ -14,6 +14,7 @@
 - `docs/openapi.json` и `scripts/export_openapi.py`; CI проверяет, что спецификация совпадает с кодом (FSP-57).
 - Экспресс-тест для жюри без регистрации: страница `/express`, `POST /api/v1/auth/guest`, 5 заданий за 5 минут, гость сразу попадает в подборку работодателя; переменная `GUEST_MODE` (FSP-32).
 - Миграция `0003_express_test` (после `0002_consents_favorites` из FSP-25): `candidate_profiles.is_guest`, `assessment_attempts.mode`.
+- Питч на 10 минут в стиле ФСП: `docs/presentation/HyreKit_pitch.pptx` с заметками докладчика и `HyreKit_pitch.pdf`, скриншоты стенда в `docs/presentation/assets/`; инструкция для жюри `docs/jury.md` (FSP-58).
 
 ### Изменено
 - Порог грейда строже: грейд подтверждается только при большинстве верных ответов (6 из 10 в полном тесте, 3 из 5 в экспресс-тесте). Порог `cut(g)` сдвинут на `CUT_OFFSET`, априорное θ центрировано на пороге проверяемого грейда; раньше Intern подтверждался при 0 из 5, Middle при 4 из 10 (FSP-61).
