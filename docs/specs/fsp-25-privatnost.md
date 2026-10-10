@@ -7,6 +7,7 @@ Linear: FSP-25. Пункты ТЗ: 2.1 «Настройки», 2.2, 3.5 «Без
 
 ## Правила и числа
 - Без согласия на обработку и публикацию профиль не виден работодателям; согласие хранится с датой и отзывается.
+- Каждая выдача и отзыв согласия пишутся в журнал `consent_events` с редакцией текста (`CONSENT_VERSION` в `candidates/service.py`); повтор того же состояния журнал не пополняет. При правке текста согласия версия поднимается, старые записи сохраняют редакцию, на которую соглашался кандидат.
 - Переключатели: показывать ФИО, город, достижения ФСП, зарплатные ожидания.
 - Скрытое ФИО заменяется псевдонимом «Кандидат #XXXX» из идентификатора профиля.
 - Контакты (почта, телефон, Telegram) раскрываются работодателю только после принятия приглашения или отклика.
@@ -15,9 +16,10 @@ Linear: FSP-25. Пункты ТЗ: 2.1 «Настройки», 2.2, 3.5 «Без
 - WHEN у кандидата нет согласия THE SYSTEM SHALL исключить его из подборки и поиска.
 - WHEN работодатель открывает карточку до принятия приглашения THE SYSTEM SHALL вернуть `contacts: null`.
 - WHEN кандидат принял приглашение THE SYSTEM SHALL показать этой компании ФИО и контакты.
+- WHEN кандидат даёт или отзывает согласие THE SYSTEM SHALL записать событие с датой и редакцией текста и показать его в журнале.
 
 ## Интерфейсы
-`PUT /candidate/settings`; `candidates.service.is_visible`, `to_card`; `hiring.service.unlocked_profiles`.
+`PUT /candidate/settings`, `GET /candidate/consents`; `candidates.service.is_visible`, `set_consent`, `consent_history`, `to_card`; `hiring.service.unlocked_profiles`.
 
 ## План тестов
-`tests/test_flow.py::test_full_reverse_hiring_flow`.
+`tests/test_flow.py::test_full_reverse_hiring_flow`, `tests/test_consents_favorites.py::test_consent_history_keeps_versions`, `::test_favorites_follow_consent`.

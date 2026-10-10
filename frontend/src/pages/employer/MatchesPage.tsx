@@ -228,6 +228,7 @@ export default function MatchesPage() {
                       item={it}
                       rank={i + 1}
                       vacancyStack={vacancy.stack}
+                      vacancyId={vacancy.id}
                       invitedStatus={invited[it.candidate.id]}
                       onInvite={() => setInviteFor(it)}
                     />
@@ -251,7 +252,7 @@ export default function MatchesPage() {
   )
 }
 
-function MatchCard({ item, rank, vacancyStack, invitedStatus, onInvite }: { item: MatchItem; rank: number; vacancyStack: string[]; invitedStatus?: Invitation['status']; onInvite: () => void }) {
+function MatchCard({ item, rank, vacancyStack, vacancyId, invitedStatus, onInvite }: { item: MatchItem; rank: number; vacancyStack: string[]; vacancyId: string; invitedStatus?: Invitation['status']; onInvite: () => void }) {
   const { specTitle } = useCatalog()
   const pct = toPct(item.breakdown)
   const status = invitedStatus ?? item.candidate.invitation_status
@@ -260,6 +261,7 @@ function MatchCard({ item, rank, vacancyStack, invitedStatus, onInvite }: { item
     <CandidateCardView
       c={c}
       rank={rank}
+      vacancyId={vacancyId}
       highlight={vacancyStack}
       missing={item.missing_stack}
       aside={

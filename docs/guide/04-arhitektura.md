@@ -80,9 +80,12 @@ erDiagram
   companies ||--o{ challenges : ""
   challenges ||--o{ challenge_submissions : ""
   candidate_profiles ||--o{ challenge_submissions : ""
+  candidate_profiles ||--o{ consent_events : ""
+  companies ||--o{ employer_favorites : ""
+  candidate_profiles ||--o{ employer_favorites : ""
 ```
 
-Подробно по полям — [docs/schema.md](../schema.md). Схема создаётся миграцией `alembic/versions/0001_initial_schema.py`.
+Подробно по полям — [docs/schema.md](../schema.md). Схема создаётся миграцией `alembic/versions/0001_initial_schema.py`, журнал согласий и избранное добавляет `0002_consents_favorites.py`.
 
 ## Описание API
 

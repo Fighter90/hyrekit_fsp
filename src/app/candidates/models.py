@@ -63,3 +63,14 @@ class CandidateProfile(UUIDMixin, TimestampMixin, Base):
 
     # Источник данных анкеты (форма / распознанное резюме)
     resume_text: Mapped[str | None] = mapped_column(Text)
+
+
+class ConsentEvent(UUIDMixin, TimestampMixin, Base):
+    """Журнал согласий кандидата: каждая выдача и отзыв с версией текста (152-ФЗ, ст. 9)."""
+
+    __tablename__ = 'consent_events'
+
+    profile_id: Mapped[UUID] = mapped_column(ForeignKey('candidate_profiles.id', ondelete='CASCADE'), index=True)
+    kind: Mapped[str] = mapped_column(String(32), default='publication')
+    version: Mapped[str] = mapped_column(String(16))
+    action: Mapped[str] = mapped_column(String(16))  # given | revoked

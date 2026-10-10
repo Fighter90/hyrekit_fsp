@@ -13,6 +13,7 @@ import ScoreRing from '../../components/ui/ScoreRing'
 import Reveal from '../../components/ui/Reveal'
 import FspPanel from '../../components/settings/FspPanel'
 import InviteModal from '../../components/employer/InviteModal'
+import FavoriteButton from '../../components/employer/FavoriteButton'
 import { experienceLabel, formatSalary, workFormatLabel } from '../../lib/format'
 
 export default function CandidateDetailPage() {
@@ -46,7 +47,8 @@ export default function CandidateDetailPage() {
                 {c.invitation_status && <StatusChip status={c.invitation_status} />}
               </div>
             </div>
-            <div className="cand-detail__cta">
+            <div className="cand-detail__cta row gap-sm">
+              {c.is_favorite !== undefined && <FavoriteButton key={c.id} profileId={c.id} initial={c.is_favorite} />}
               <Button size="lg" icon={<Send size={16} />} onClick={() => setInviting(true)} disabled={invited}>
                 {invited ? 'Приглашение отправлено' : 'Пригласить'}
               </Button>

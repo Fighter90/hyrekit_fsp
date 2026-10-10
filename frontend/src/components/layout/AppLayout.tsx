@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, UserRound, ClipboardCheck, Mail, Briefcase, Trophy, Settings, LogOut, Menu, X,
-  Building2, Users, Send, Search,
+  Building2, Users, Send, Search, Bookmark,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import Logo from '../ui/Logo'
@@ -32,6 +32,7 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { to: '/app/company', label: 'Компания', icon: Building2 },
     { to: '/app/vacancies', label: 'Потребности', icon: Briefcase },
     { to: '/app/candidates', label: 'Банк кандидатов', icon: Search },
+    { to: '/app/favorites', label: 'Избранное', icon: Bookmark },
     { to: '/app/invitations', label: 'Приглашения и отклики', icon: Send },
     { to: '/app/challenges', label: 'Челленджи', icon: Trophy },
     { to: '/app/settings', label: 'Настройки', icon: Settings },

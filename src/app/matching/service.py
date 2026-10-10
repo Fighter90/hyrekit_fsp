@@ -223,6 +223,7 @@ async def match_vacancy(
     return {
         'vacancy_id': vacancy.id,
         'required_stack': req,
+        'base_total': len(pool),  # подборка до уточняющих фильтров: сброс фильтров возвращает её
         'total': len(items),
         'categories': sorted(categories.values(), key=lambda c: GRADE_CODES.index(c['grade'])),
         'items': items[:limit],
