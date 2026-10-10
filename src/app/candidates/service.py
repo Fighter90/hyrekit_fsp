@@ -13,11 +13,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.assessment.engine import cut
 from app.auth.models import User
-from app.candidates.models import DEFAULT_PRIVACY, CandidateProfile
+from app.candidates.models import DEFAULT_PRIVACY, CandidateProfile, ConsentEvent
 from app.catalog.data import GRADE_COOLDOWN_DAYS, category_title
 from app.fsp.provider import summarize
 
 RATING_WEIGHTS = {'test': 0.65, 'fsp': 0.25, 'freshness': 0.10}
+# Версия текста согласия на обработку и публикацию профиля (раздел 4 политики конфиденциальности).
+# При изменении текста — поднять версию; в журнале остаётся, на какую версию кандидат соглашался.
+CONSENT_VERSION = '2026-10-10'
 
 
 def utcnow() -> datetime:
@@ -211,6 +214,35 @@ def to_card(
         'contacts_unlocked': contacts_unlocked,
         'invitation_status': invitation_status,
     }
+
+
+def set_consent(session: AsyncSession, profile: CandidateProfile, given: bool) -> None:
+    """Выдать или отозвать согласие на публикацию и записать событие в журнал.
+
+    Повтор того же состояния журнал не засоряет: событие пишется только при смене.
+    """
+    if bool(profile.consent_given_at) == given:
+        return
+    now = utcnow()
+    profile.consent_given_at = now if given else None
+    session.add(
+        ConsentEvent(
+            profile_id=profile.id,
+            kind='publication',
+            version=CONSENT_VERSION,
+            action='given' if given else 'revoked',
+            created_at=now,
+            updated_at=now,
+        )
+    )
+
+
+async def consent_history(session: AsyncSession, profile: CandidateProfile) -> list[dict[str, Any]]:
+    stmt = select(ConsentEvent).where(ConsentEvent.profile_id == profile.id).order_by(ConsentEvent.created_at.desc())
+    return [
+        {'kind': e.kind, 'version': e.version, 'action': e.action, 'at': e.created_at}
+        for e in (await session.execute(stmt)).scalars()
+    ]
 
 
 def touch(profile: CandidateProfile) -> None:
