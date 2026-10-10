@@ -116,7 +116,7 @@ async def update_settings(
         allowed = {k: bool(v) for k, v in data.privacy.items() if k in service.DEFAULT_PRIVACY}
         profile.privacy = {**service.DEFAULT_PRIVACY, **(profile.privacy or {}), **allowed}
     if data.consent is not None:
-        profile.consent_given_at = service.utcnow() if data.consent else None
+        service.set_consent(session, profile, data.consent)
     if 'fsp_id' in data.model_fields_set:
         if data.fsp_id:
             fsp_id = data.fsp_id.strip().upper()
@@ -131,6 +131,13 @@ async def update_settings(
     await session.flush()
     await session.refresh(profile)
     return service.to_out(profile)
+
+
+@router.get('/consents', summary='Журнал согласий с версиями текста')
+async def consents(
+    profile: CandidateProfile = Depends(current_profile), session: AsyncSession = Depends(get_session)
+) -> dict:
+    return {'current_version': service.CONSENT_VERSION, 'items': await service.consent_history(session, profile)}
 
 
 @router.get('/fsp', summary='Достижения ФСП по привязанному ID')

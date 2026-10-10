@@ -13,14 +13,18 @@ Linear: FSP-43, FSP-44, FSP-45. Пункты ТЗ: 2.1 «Описание пот
 - Причины: соответствие категории, «Стек: k из n», результат теста, ФСП, активность; отдельно — недостающий стек.
 - Фильтры (грейд, обязательный стек, ФСП) уточняют подборку, не перестраивая её.
 - Поиск по банку: специализация, грейд, категория, стек, наличие ФСП, текст; пагинация.
+- Ответ подборки содержит `base_total` (до фильтров) и `total` (после): интерфейс показывает «после фильтров N из M» и возвращает исходную подборку без нового запроса.
+- Избранное (шортлист) — на уровне компании, одна запись на кандидата, по желанию с привязкой к потребности и заметкой. Избранное не раскрывает контакты; кандидат без согласия в нём не показывается.
 
 ## Критерии приёмки (EARS)
 - WHEN работодатель открывает подборку THE SYSTEM SHALL вернуть кандидатов по убыванию балла с разложением балла и причинами.
 - WHEN в описании вакансии упомянута технология не из стека THE SYSTEM SHALL учесть её в требуемом стеке.
-- WHEN работодатель включает фильтр THE SYSTEM SHALL вернуть подмножество исходной подборки в том же порядке.
+- WHEN работодатель включает фильтр THE SYSTEM SHALL вернуть подмножество исходной подборки в том же порядке и прежний `base_total`.
+- WHEN работодатель добавляет кандидата в избранное THE SYSTEM SHALL показывать `is_favorite: true` в банке, подборке и карточке этой компании и не показывать запись другим компаниям.
+- WHEN кандидат отзывает согласие THE SYSTEM SHALL исключить его из избранного и отклонять добавление (404).
 
 ## Интерфейсы
-`POST/GET/PUT/DELETE /employer/vacancies`, `GET /employer/vacancies/{id}/matches`, `GET /employer/candidates`, `GET /employer/categories`; `matching.service.match_vacancy`, `score_candidate`, `ability_fit`.
+`POST/GET/PUT/DELETE /employer/vacancies`, `GET /employer/vacancies/{id}/matches`, `GET /employer/candidates`, `GET /employer/categories`, `GET/PUT/DELETE /employer/favorites`; `matching.service.match_vacancy`, `score_candidate`, `ability_fit`.
 
 ## План тестов
-`tests/test_flow.py`, `tests/test_method/test_method.py::test_grade_and_ability_fit`, `scripts/validate.py` (precision@10).
+`tests/test_flow.py`, `tests/test_consents_favorites.py`, `tests/test_method/test_method.py::test_grade_and_ability_fit`, `scripts/validate.py` (precision@10).

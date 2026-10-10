@@ -22,7 +22,7 @@ from app.core.database import get_session
 from app.core.exceptions import Conflict, NotFound
 from app.core.roles import require_employer
 from app.employers import service
-from app.employers.models import Company, Vacancy
+from app.employers.models import Company, Favorite, Vacancy
 from app.hiring.models import Application, Invitation, Status
 from app.hiring.service import application_out, invitation_out, last_invitation_status, unlocked_profiles
 from app.matching.service import _passes_filters, match_vacancy, norm, required_stack, visible_profiles
@@ -162,7 +162,7 @@ async def vacancy_matches(
     session: AsyncSession = Depends(get_session),
 ) -> dict:
     v = await service.get_own_vacancy(session, company, vacancy_id)
-    return await match_vacancy(
+    result = await match_vacancy(
         session,
         v,
         grade=grade,
@@ -172,6 +172,10 @@ async def vacancy_matches(
         unlocked=await unlocked_profiles(session, company.id),
         statuses=await last_invitation_status(session, company.id),
     )
+    favorites = await favorite_ids(session, company.id)
+    for item in result['items']:
+        item['candidate']['is_favorite'] = item['candidate']['id'] in favorites
+    return result
 
 
 @router.get('/vacancies/{vacancy_id}/assessment', summary='Тест под вакансию: два варианта равной сложности')
@@ -220,10 +224,17 @@ async def search_candidates(
     pool.sort(key=lambda p: (-GRADE_ORDER.get(p.grade or 'intern', 0), -(rating(p) or 0)))
     unlocked = await unlocked_profiles(session, company.id)
     statuses = await last_invitation_status(session, company.id)
+    favorites = await favorite_ids(session, company.id)
     page = pool[offset : offset + limit]
     return {
         'total': len(pool),
-        'items': [to_card(p, contacts_unlocked=p.id in unlocked, invitation_status=statuses.get(p.id)) for p in page],
+        'items': [
+            {
+                **to_card(p, contacts_unlocked=p.id in unlocked, invitation_status=statuses.get(p.id)),
+                'is_favorite': p.id in favorites,
+            }
+            for p in page
+        ],
     }
 
 
@@ -231,13 +242,96 @@ async def search_candidates(
 async def candidate_card(
     profile_id: UUID, company: Company = Depends(current_company), session: AsyncSession = Depends(get_session)
 ) -> dict:
+    p, unlocked = await _accessible_profile(session, company, profile_id)
+    statuses = await last_invitation_status(session, company.id)
+    card = to_card(p, contacts_unlocked=p.id in unlocked, invitation_status=statuses.get(p.id))
+    return {**card, 'is_favorite': p.id in await favorite_ids(session, company.id)}
+
+
+async def _accessible_profile(
+    session: AsyncSession, company: Company, profile_id: UUID
+) -> tuple[CandidateProfile, set[UUID]]:
+    """Профиль, который компании разрешено видеть, и множество раскрывшихся ей кандидатов."""
     p = await session.get(CandidateProfile, profile_id)
     unlocked = await unlocked_profiles(session, company.id)
     # профиль без согласия/категории доступен только тем, кому кандидат сам открылся
     if p is None or (not (p.category and p.consent_given_at) and p.id not in unlocked):
         raise NotFound('Кандидат')
+    return p, unlocked
+
+
+# ── Избранное ────────────────────────────────────────────────────────────────
+async def favorite_ids(session: AsyncSession, company_id: UUID) -> set[UUID]:
+    stmt = select(Favorite.profile_id).where(Favorite.company_id == company_id)
+    return set((await session.execute(stmt)).scalars())
+
+
+class FavoriteIn(BaseModel):
+    vacancy_id: UUID | None = None
+    note: str | None = Field(None, max_length=500)
+
+
+@router.get('/favorites', summary='Избранные кандидаты (шортлист)')
+async def list_favorites(
+    vacancy_id: UUID | None = None,
+    company: Company = Depends(current_company),
+    session: AsyncSession = Depends(get_session),
+) -> list[dict]:
+    stmt = select(Favorite).where(Favorite.company_id == company.id).order_by(Favorite.created_at.desc())
+    if vacancy_id:
+        stmt = stmt.where(Favorite.vacancy_id == vacancy_id)
+    unlocked = await unlocked_profiles(session, company.id)
     statuses = await last_invitation_status(session, company.id)
-    return to_card(p, contacts_unlocked=p.id in unlocked, invitation_status=statuses.get(p.id))
+    out = []
+    for f in (await session.execute(stmt)).scalars():
+        p = await session.get(CandidateProfile, f.profile_id)
+        # отозвавший согласие кандидат пропадает и из шортлиста, пока сам не откроется компании
+        if p is None or (not (p.category and p.consent_given_at) and p.id not in unlocked):
+            continue
+        card = to_card(p, contacts_unlocked=p.id in unlocked, invitation_status=statuses.get(p.id))
+        out.append(
+            {
+                'candidate': {**card, 'is_favorite': True},
+                'vacancy_id': f.vacancy_id,
+                'note': f.note,
+                'added_at': f.created_at,
+            }
+        )
+    return out
+
+
+@router.put('/favorites/{profile_id}', summary='Добавить кандидата в избранное')
+async def add_favorite(
+    profile_id: UUID,
+    data: FavoriteIn | None = None,
+    company: Company = Depends(current_company),
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    data = data or FavoriteIn()
+    await _accessible_profile(session, company, profile_id)
+    if data.vacancy_id:
+        await service.get_own_vacancy(session, company, data.vacancy_id)
+    stmt = select(Favorite).where(Favorite.company_id == company.id, Favorite.profile_id == profile_id)
+    fav = (await session.execute(stmt)).scalar_one_or_none()
+    if fav is None:
+        fav = Favorite(company_id=company.id, profile_id=profile_id)
+        session.add(fav)
+    fav.vacancy_id, fav.note = data.vacancy_id, data.note
+    await session.flush()
+    return {'profile_id': profile_id, 'vacancy_id': fav.vacancy_id, 'note': fav.note, 'is_favorite': True}
+
+
+@router.delete(
+    '/favorites/{profile_id}', status_code=204, summary='Убрать кандидата из избранного', response_class=Response
+)
+async def remove_favorite(
+    profile_id: UUID, company: Company = Depends(current_company), session: AsyncSession = Depends(get_session)
+) -> Response:
+    stmt = select(Favorite).where(Favorite.company_id == company.id, Favorite.profile_id == profile_id)
+    fav = (await session.execute(stmt)).scalar_one_or_none()
+    if fav is not None:
+        await session.delete(fav)
+    return Response(status_code=204)
 
 
 @router.get('/categories', summary='Категории кандидатов и их наполненность')

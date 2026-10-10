@@ -127,6 +127,7 @@ pre {
 .text-blue { color: var(--blue-bright); }
 .text-red { color: var(--red-bright); }
 .text-success { color: var(--success); }
+.text-danger { color: var(--danger); }
 .w-40 { width: 40%; }
 .w-60 { width: 60%; }
 .w-100 { width: 100%; }
