@@ -83,6 +83,8 @@ services:
     build:
       context: ./frontend
       target: production
+      args:
+        APP_COMMIT: ${APP_COMMIT:-dev}
     container_name: hyrekit-frontend
     ports:
       - "127.0.0.1:3000:80"

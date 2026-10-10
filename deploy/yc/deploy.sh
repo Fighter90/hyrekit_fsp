@@ -50,7 +50,7 @@ yc iam create-token | docker login --username iam --password-stdin cr.yandex
 if [ -z "${SKIP_BUILD:-}" ]; then
   log "Сборка и публикация образов с тегом $TAG"
   docker build -t "$REGISTRY/hyrekit-app:$TAG" "$ROOT"
-  docker build --target production -t "$REGISTRY/hyrekit-frontend:$TAG" "$ROOT/frontend"
+  docker build --target production --build-arg APP_COMMIT="$TAG" -t "$REGISTRY/hyrekit-frontend:$TAG" "$ROOT/frontend"
   docker push "$REGISTRY/hyrekit-app:$TAG"
   docker push "$REGISTRY/hyrekit-frontend:$TAG"
 fi
