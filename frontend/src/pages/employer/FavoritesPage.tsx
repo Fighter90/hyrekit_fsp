@@ -11,6 +11,7 @@ import { SkeletonCard } from '../../components/ui/Skeleton'
 import CandidateCardView from '../../components/employer/CandidateCardView'
 import InviteModal from '../../components/employer/InviteModal'
 import { formatDateTime, plural } from '../../lib/format'
+import { invitationPending } from '../../lib/candidate'
 
 /** Шортлист компании: отмеченные кандидаты, при желании по конкретной потребности. */
 export default function FavoritesPage() {
@@ -60,8 +61,8 @@ export default function FavoritesPage() {
               actions={
                 <>
                   <LinkButton to={`/app/candidates/${f.candidate.id}`} variant="ghost" size="sm" icon={<UserRound size={14} />}>Профиль</LinkButton>
-                  <Button size="sm" icon={<Send size={14} />} onClick={() => setInviteFor(f.candidate)} disabled={!!f.candidate.invitation_status && f.candidate.invitation_status !== 'declined'}>
-                    {f.candidate.invitation_status && f.candidate.invitation_status !== 'declined' ? 'Приглашён' : 'Пригласить'}
+                  <Button size="sm" icon={<Send size={14} />} onClick={() => setInviteFor(f.candidate)} disabled={invitationPending(f.candidate.invitation_status)}>
+                    {invitationPending(f.candidate.invitation_status) ? 'Приглашён' : 'Пригласить'}
                   </Button>
                 </>
               }

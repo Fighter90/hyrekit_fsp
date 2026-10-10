@@ -6,12 +6,19 @@
  *   NODE_PATH=$(npm root -g) node scripts/e2e.cjs --base https://hyrekit.ru
  *   node scripts/e2e.cjs --headed --slow 250                                          # смотреть глазами
  *
- * Сценарий 1: кандидат регистрируется → опрос → тест → категория → согласие и ФСП ID;
- * работодатель создаёт потребность → подборка → приглашение; кандидат входит заново и
- * принимает приглашение; работодатель видит контакты в карточке.
- * Сценарий 2: кандидат без ФСП — регистрация, опрос, тест, согласие без ФСП ID.
+ * Сценарий 1: новый кандидат регистрируется → опрос → тест в интерфейсе → результат
+ * согласован с ответами → согласие и ФСП ID с достижениями.
+ * Сценарий 2: работодатель создаёт потребность → подборка → приглашает демо-кандидата
+ * talent07 → тот входит и принимает приглашение → работодатель видит контакты.
+ * Сценарий 3: новый кандидат без ФСП — опрос, тест, согласие без ФСП ID; карточка
+ * кандидата без ФСП у работодателя.
  *
- * Нужны демо-данные (SEED_DEMO=true): employer@hyrekit.ru / HyreKit2026.
+ * Новые кандидаты отвечают наугад, поэтому грейд у них, как и положено, обычно не
+ * подтверждается: тест проверяет, что результат показан и согласован, а не сам исход.
+ * Приглашают поэтому синтетического кандидата из демо-данных — у него есть категория
+ * и согласие, а войти за него можно (scripts/smoke.py делает так же).
+ *
+ * Нужны демо-данные (SEED_DEMO=true): employer@hyrekit.ru и talent07@demo.hyrekit.ru / HyreKit2026.
  * Почту подтверждать не нужно: интерфейс не блокирует неподтверждённых, только показывает баннер.
  * Лимиты API: регистрация 3/мин, вход 5/мин с адреса; прогон тратит 2 регистрации и 2 входа,
  * поэтому запускать не чаще раза в минуту.
@@ -36,7 +43,8 @@ try {
 const PASSWORD = 'HyreKit2026' // публичный пароль демо-аккаунтов
 const EMPLOYER = 'employer@hyrekit.ru'
 const FSP_ID = 'FSP-123457' // демо-провайдер ФСП отдаёт по нему историю соревнований
-const MAX_ATTEMPTS = 8 // пересдачи Intern, пока тест не подтвердит грейд (см. комментарий у passTest)
+const TALENT = 'talent07@demo.hyrekit.ru' // синтетический кандидат с категорией Backend и согласием
+const E2E_MARK = '(e2e ' // метка в названии потребности и приглашения, по ней убираются хвосты прошлых прогонов
 
 function parseArgs(argv) {
   const args = { base: 'http://localhost:5173', headed: false, slow: 0, timeout: 15000 }
@@ -201,26 +209,36 @@ async function runTest(page, grade) {
   const dialog = page.getByRole('dialog', { name: 'Завершить тест?' })
   await dialog.getByText(`Отвечено ${total} из ${total}`).waitFor()
   await dialog.getByRole('button', { name: 'Завершить и узнать результат' }).click()
-  const title = page.getByRole('heading', { name: /Грейд подтверждён|Пока не подтверждён/ })
-  await title.waitFor()
-  const passed = (await title.textContent()).includes('подтверждён') && !(await title.textContent()).includes('Пока')
-  const summary = (await page.getByText(/^Верно \d+ из \d+/).textContent()).trim()
-  return { passed, total, summary }
+  return checkResult(page, total)
 }
 
 /**
- * Тест до подтверждения грейда. Ответы случайные, поэтому Intern подтверждается не всегда
- * (примерно в 6 случаях из 10). Пока грейд не подтверждён, пересдача доступна сразу
- * (assessment.service.eligibility), поэтому пересдаём до MAX_ATTEMPTS раз: вероятность
- * не набрать категорию за все попытки — доли процента.
+ * Экран результата согласован: «Верно X из N» совпадает с числом заданий и с суммой
+ * разбора по темам, вердикт, строка категории и рекомендация не противоречат друг другу.
+ * Исход теста не проверяется — при случайных ответах он и должен быть любым.
  */
-async function passTest(page, grade) {
-  for (let n = 1; n <= MAX_ATTEMPTS; n++) {
-    const r = await runTest(page, grade)
-    if (r.passed) return { ...r, attempts: n }
-    await page.getByRole('button', { name: 'К тестированию' }).click()
+async function checkResult(page, total) {
+  const title = page.getByRole('heading', { name: /Грейд подтверждён|Пока не подтверждён/ })
+  await title.waitFor()
+  const passed = (await title.textContent()).trim() === 'Грейд подтверждён'
+  await page.getByText(/^результат теста ·/).waitFor()
+  await page.getByText('баллов', { exact: true }).waitFor() // кольцо с баллом
+  const summary = (await page.getByText(/^Верно \d+ из \d+/).textContent()).trim()
+  const [, correct, n] = summary.match(/^Верно (\d+) из (\d+)/).map(Number)
+  expect(n === total, `«${summary}», а заданий ${total}`)
+  await page.getByText('Разбор по темам').waitFor()
+  const topics = (await page.getByText(/^\d+\/\d+$/).allTextContents()).map((t) => t.split('/').map(Number))
+  const sum = topics.reduce((acc, [c, t]) => [acc[0] + c, acc[1] + t], [0, 0])
+  expect(topics.length > 0 && sum[0] === correct && sum[1] === n, `разбор по темам ${sum.join('/')} не сходится с «${summary}»`)
+  if (passed) {
+    await page.getByText('Присвоена категория').waitFor()
+    await page.getByText(/Категория подтверждена|попробуйте грейд выше/).waitFor()
+  } else {
+    await page.getByText('Категория не присвоена').waitFor()
+    await page.getByText('Рекомендуем пересдать на грейд ниже').waitFor()
+    await page.getByRole('button', { name: /^Сдавать / }).waitFor()
   }
-  throw new Error(`грейд не подтверждён за ${MAX_ATTEMPTS} попыток`)
+  return { passed, total, correct, summary: summary.split(' · ')[0] }
 }
 
 async function giveConsent(page) {
@@ -229,40 +247,36 @@ async function giveConsent(page) {
   await page.getByText(/Согласие дано \d/).waitFor()
 }
 
-async function scenarioWithFsp(browser) {
-  const id = uid()
-  const name = `Е2Е Кандидат ${id}`
-  const email = `e2e-${id}@example.ru`
-  const token = `e2e${id}` // уникальная технология: по ней работодатель найдёт именно этого кандидата
-  const cand = await newPage(browser)
+/** Токен вошедшего пользователя из localStorage вкладки — для чтения id своего профиля. */
+async function profileId(page) {
+  const token = await page.evaluate(() => localStorage.getItem('access_token'))
+  const r = await page.request.get(`${args.base}/api/v1/candidate/profile`, { headers: { Authorization: `Bearer ${token}` } })
+  expect(r.ok(), `/candidate/profile → ${r.status()}`)
+  return (await r.json()).id
+}
 
-  console.log('\n— Сценарий 1: кандидат с ФСП и приглашение —')
-  await step('Регистрация кандидата через форму', async () => {
-    await register(cand, name, email)
+async function freshCandidate(page, { label, name, email, spec, stack }) {
+  await step(`Регистрация ${label} через форму`, async () => {
+    await register(page, name, email)
+    await page.getByText('Подтвердите почту').waitFor() // почта не блокирует кабинет
     return email
   })
-  await step('Почта не блокирует кабинет (баннер подтверждения)', async () => {
-    await cand.getByText('Подтвердите почту').waitFor()
+  await step(`Опрос: ${spec}, Junior, стек`, () => survey(page, { spec, grade: 'Junior', stack }))
+  const r = await step('Тест пройден в интерфейсе, результат согласован', async () => {
+    const res = await runTest(page, 'Junior')
+    return `${res.summary}, ${res.passed ? 'категория присвоена' : 'грейд не подтверждён, предложен ниже'}`
   })
-  await step('Опрос: Backend, Intern, стек', () => survey(cand, { spec: 'Backend', grade: 'Intern', stack: ['Python', token] }))
-  const test = await step('Тест пройден в интерфейсе, категория присвоена', async () => {
-    const r = await passTest(cand, 'Intern')
-    await cand.getByText('Присвоена категория').waitFor()
-    return `${r.total} заданий, ${r.summary.split(' · ')[0]}, попыток ${r.attempts}`
+  return r
+}
+
+async function scenarioFsp(browser) {
+  const id = uid()
+  const cand = await newPage(browser)
+  console.log('\n— Сценарий 1: новый кандидат с ФСП —')
+  await freshCandidate(cand, {
+    label: 'кандидата', name: `Е2Е Кандидат ${id}`, email: `e2e-${id}@example.ru`, spec: 'Backend', stack: ['Python', 'FastAPI'],
   })
-  await step('Категория видна в кабинете', async () => {
-    await nav(cand, 'Обзор', '/app/dashboard')
-    await cand.getByText('Backend · Intern').first().waitFor()
-    await cand.getByText(/Профиль скрыт: нужно согласие/).waitFor()
-  })
-  await step('Согласие на публикацию', async () => {
-    await giveConsent(cand)
-    await cand.getByText('Профиль виден работодателям').waitFor()
-  })
-  await step('Имя открыто работодателям', async () => {
-    await tick(cand.getByRole('switch', { name: /Показывать имя/ }))
-    await cand.getByText('Настройки приватности сохранены').waitFor()
-  })
+  await step('Согласие на публикацию', () => giveConsent(cand))
   await step('ФСП ID привязан, достижения подтянулись', async () => {
     await cand.getByLabel('ФСП ID').fill(FSP_ID)
     await cand.getByRole('button', { name: 'Привязать' }).click()
@@ -271,22 +285,65 @@ async function scenarioWithFsp(browser) {
     await cand.getByText('баллы ФСП', { exact: true }).waitFor()
     return line
   })
+  await step('Баллы ФСП в кабинете', async () => {
+    await nav(cand, 'Обзор', '/app/dashboard')
+    await cand.getByText(/\d+ достижени/).first().waitFor()
+  })
+  pages.delete(cand)
+  await cand.context().close()
+}
 
-  // --- Работодатель ---
+async function scenarioInvite(browser) {
+  const id = uid()
+  const vacancy = `Backend-разработчик ${E2E_MARK}${id})`
+  const tal = await newPage(browser)
+  console.log('\n— Сценарий 2: потребность, подборка, приглашение —')
+
+  let talentId = ''
+  let category = ''
+  await step('Демо-кандидат talent07 входит, категория и согласие есть', async () => {
+    await login(tal, TALENT)
+    const badge = await tal.getByText(/Backend · (Intern|Junior|Middle|Senior|Lead)/).first().textContent()
+    category = badge.match(/Backend · \w+/)[0]
+    await tal.getByText('Профиль виден работодателям').waitFor()
+    talentId = await profileId(tal)
+    return category
+  })
+  await step('Хвосты прошлых прогонов отклонены', async () => {
+    // упавший прогон мог оставить приглашение без ответа — с ним новое не отправить (409)
+    await nav(tal, 'Приглашения', '/app/invitations')
+    await tal.getByRole('tab', { name: /^Новые/ }).click()
+    let n = 0
+    for (;;) {
+      const stale = tal.getByRole('button', { name: new RegExp(E2E_MARK.replace(/[()]/g, '\\$&')) })
+      await tal.getByRole('tab', { name: /^Новые/ }).waitFor()
+      await tal.waitForTimeout(300)
+      if (!(await stale.count())) break
+      await stale.first().click()
+      const dialog = tal.getByRole('dialog')
+      await dialog.getByRole('button', { name: 'Отклонить', exact: true }).click()
+      await dialog.getByRole('button', { name: 'Отклонить приглашение' }).click()
+      await dialog.getByText('Отклонено').waitFor()
+      await dialog.getByRole('button', { name: 'Закрыть' }).last().click()
+      n++
+    }
+    return n ? `отклонено ${n}` : 'нет'
+  })
+
   const emp = await employer(browser)
-  const vacancy = `Стажёр backend (e2e ${id})`
-  let profileUrl = ''
+  const grade = category.split(' · ')[1].toLowerCase()
+  let card
   await step('Новая потребность через форму', async () => {
     await nav(emp, 'Потребности', '/app/vacancies')
     await goto(emp, '/app/vacancies/new')
     await emp.getByLabel('Название').fill(vacancy)
     await emp.getByLabel('Специализация').selectOption('backend')
-    await emp.getByLabel('Грейд от').selectOption('intern')
-    await emp.getByLabel('Грейд до').selectOption('junior')
-    await emp.getByLabel(/^От(\s|$)/).fill('90000')
-    await emp.getByLabel(/^До(\s|$)/).fill('130000')
+    await emp.getByLabel('Грейд от').selectOption(grade)
+    await emp.getByLabel('Грейд до').selectOption(grade)
+    await emp.getByLabel(/^От(\s|$)/).fill('250000')
+    await emp.getByLabel(/^До(\s|$)/).fill('320000')
     const tags = emp.getByLabel('Стек')
-    for (const t of ['Python', token]) {
+    for (const t of ['Python', 'PostgreSQL']) {
       await tags.fill(t)
       await tags.press('Enter')
     }
@@ -296,83 +353,62 @@ async function scenarioWithFsp(browser) {
     await emp.getByRole('button', { name: 'Сохранить и к подборке' }).click()
     await emp.waitForURL(/\/app\/vacancies\/[\w-]+\/matches/)
     await emp.getByRole('heading', { name: vacancy }).waitFor()
+    return `Backend, ${category.split(' · ')[1]}`
   })
-  await step('Подборка находит нового кандидата с объяснением', async () => {
-    await emp.getByText(/Найдено \d+/).waitFor()
-    await emp.getByRole('button', { name: token, exact: true }).click() // фильтр «Обязательный стек»
-    const card = emp.getByRole('article').filter({ hasText: name })
+  await step('Подборка: talent07 с баллом и причинами', async () => {
+    const summary = (await emp.getByText(/^Найдено \d+/).textContent()).trim()
+    card = emp.getByRole('article').filter({ has: emp.locator(`a[href="/app/candidates/${talentId}"]`) }).first()
     await card.waitFor()
     await card.getByRole('list', { name: 'Почему рекомендован' }).waitFor()
-    profileUrl = await card.getByRole('link', { name: 'Профиль' }).getAttribute('href')
     const score = (await card.getByTitle('Итоговый балл совпадения').textContent()).replace(/\D+/g, ' ').trim()
-    await card.getByTitle('Достижения в соревнованиях ФСП').waitFor()
-    return `балл совпадения ${score}, бейдж ФСП есть`
-  })
-  await step('Контакты скрыты до ответа кандидата', async () => {
-    await goto(emp, profileUrl)
-    await emp.getByText('Откроются, когда кандидат примет приглашение').waitFor()
-    await emp.getByText(`ФСП ID ${FSP_ID} ·`).waitFor()
-    await emp.goBack()
+    return `${summary}; балл talent07 ${score}`
   })
   await step('Приглашение из подборки (InviteModal)', async () => {
-    await emp.getByRole('button', { name: token, exact: true }).click()
-    const card = emp.getByRole('article').filter({ hasText: name })
+    // после прошлых прогонов приглашение могло быть принято — пригласить снова можно
     await card.getByRole('button', { name: 'Пригласить' }).click()
     const dialog = emp.getByRole('dialog', { name: 'Пригласить кандидата' })
     expect((await dialog.getByLabel('Позиция').inputValue()) === vacancy, 'позиция не подставилась из потребности')
-    expect((await dialog.getByLabel('Зарплата от, ₽').inputValue()) === '90000', 'вилка не подставилась')
+    expect((await dialog.getByLabel('Зарплата от, ₽').inputValue()) === '250000', 'вилка не подставилась')
     await dialog.getByLabel('Сообщение').fill('Приглашаем на интервью: команда платёжного шлюза, менторство.')
     await dialog.getByLabel('Способ связи').fill('hr@technoplatform.ru')
     await dialog.getByRole('button', { name: 'Отправить приглашение' }).click()
     await dialog.waitFor({ state: 'detached' })
     await card.getByRole('button', { name: 'Приглашён' }).waitFor()
   })
-
-  // --- Кандидат отвечает ---
-  await step('Кандидат выходит и входит заново', async () => {
-    await cand.getByRole('button', { name: 'Выйти' }).click()
-    await cand.waitForURL((u) => u.pathname === '/')
-    await login(cand, email)
+  await step('Пока нет ответа, повторно пригласить нельзя', async () => {
+    await goto(emp, `/app/candidates/${talentId}`)
+    await emp.getByRole('button', { name: 'Приглашение отправлено' }).waitFor()
+    expect(await emp.getByRole('button', { name: 'Приглашение отправлено' }).isDisabled(), 'кнопка активна')
   })
   await step('Кандидат видит приглашение с вилкой и принимает его', async () => {
-    await nav(cand, 'Приглашения', '/app/invitations')
-    const inv = cand.getByRole('button', { name: new RegExp(vacancy.replace(/[()]/g, '\\$&')) })
-    await inv.getByText('90 000').waitFor()
+    await goto(tal, '/app/invitations')
+    const inv = tal.getByRole('button', { name: new RegExp(vacancy.replace(/[()]/g, '\\$&')) })
+    await inv.getByText('250 000').waitFor()
     await inv.click()
-    const dialog = cand.getByRole('dialog', { name: vacancy })
+    const dialog = tal.getByRole('dialog', { name: vacancy })
     await dialog.getByRole('button', { name: 'Принять и открыть контакты' }).click()
     await dialog.getByText('Вы приняли приглашение.').waitFor()
     await dialog.getByText('hr@technoplatform.ru').waitFor()
   })
   await step('Работодатель видит контакты в карточке кандидата', async () => {
-    await goto(emp, profileUrl)
-    const link = emp.getByRole('link', { name: email })
-    await link.waitFor()
-    await emp.getByRole('heading', { name, level: 1 }).waitFor()
-    return email
+    await emp.reload()
+    await emp.getByRole('link', { name: TALENT }).waitFor()
+    await emp.getByRole('button', { name: 'Пригласить' }).waitFor() // принятое не мешает новому приглашению
+    return TALENT
   })
-  return test
+  pages.delete(tal)
+  await tal.context().close()
 }
 
-async function scenarioWithoutFsp(browser) {
+async function scenarioNoFsp(browser) {
   const id = uid()
-  const name = `Е2Е БезФСП ${id}`
-  const email = `e2e-nofsp-${id}@example.ru`
-  const token = `e2e${id}`
+  const token = `e2e${id}` // уникальная технология: по ней кандидата можно найти в банке
   const page = await newPage(browser)
-
-  console.log('\n— Сценарий 2: кандидат без ФСП —')
-  await step('Регистрация кандидата без ФСП', () => register(page, name, email))
-  await step('Опрос: Frontend, Intern, стек', () => survey(page, { spec: 'Frontend', grade: 'Intern', stack: ['TypeScript', token] }))
-  await step('Тест пройден в интерфейсе, категория присвоена', async () => {
-    const r = await passTest(page, 'Intern')
-    await page.getByText('Присвоена категория').waitFor()
-    return `${r.summary.split(' · ')[0]}, попыток ${r.attempts}`
+  console.log('\n— Сценарий 3: кандидат без ФСП —')
+  const res = await freshCandidate(page, {
+    label: 'кандидата без ФСП', name: `Е2Е БезФСП ${id}`, email: `e2e-nofsp-${id}@example.ru`, spec: 'Frontend', stack: ['TypeScript', token],
   })
-  await step('Согласие без ФСП ID', async () => {
-    await giveConsent(page)
-    await page.getByText('Профиль виден работодателям').waitFor()
-  })
+  await step('Согласие без ФСП ID', () => giveConsent(page))
   await step('В настройках нет достижений ФСП, предложено привязать ФСП ID', async () => {
     await page.getByLabel('ФСП ID').waitFor()
     expect((await page.getByText('баллы ФСП', { exact: true }).count()) === 0, 'на странице есть панель достижений')
@@ -380,20 +416,31 @@ async function scenarioWithoutFsp(browser) {
     await page.getByRole('link', { name: 'привязать ФСП ID' }).waitFor()
   })
 
+  // Без категории новый кандидат работодателю не виден (так и должно быть), поэтому
+  // карточку «без ФСП» тогда смотрим у демо-кандидата Frontend без достижений из банка.
+  const fresh = res.includes('категория присвоена')
+  const freshId = fresh ? await profileId(page) : null
   const emp = await employer(browser)
-  await step('Банк кандидатов находит кандидата без бейджа ФСП', async () => {
+  await step('Банк кандидатов: кандидат без бейджа ФСП', async () => {
     await nav(emp, 'Банк кандидатов', '/app/candidates')
-    await emp.getByLabel('Поиск').fill(token)
-    await emp.waitForURL((u) => u.searchParams.get('q') === token)
-    await emp.getByText(/^1 кандидат$/).waitFor()
-    const card = emp.getByRole('article')
-    await card.getByText('Frontend · Intern').waitFor()
-    expect((await card.getByTitle('Достижения в соревнованиях ФСП').count()) === 0, 'у кандидата бейдж ФСП')
+    await emp.getByLabel('Специализация').selectOption('frontend')
+    await emp.waitForURL((u) => u.searchParams.get('specialization') === 'frontend')
+    if (fresh) {
+      await emp.getByLabel('Поиск').fill(token)
+      await emp.waitForURL((u) => u.searchParams.get('q') === token)
+    }
+    await emp.getByText(/^\d+ кандидат/).waitFor()
+    let card = emp.getByRole('article').filter({ hasNot: emp.getByTitle('Достижения в соревнованиях ФСП') })
+    if (fresh) card = card.filter({ has: emp.locator(`a[href="/app/candidates/${freshId}"]`) })
+    card = card.first()
+    await card.waitFor()
+    const who = (await card.getByRole('link').first().textContent()).trim()
     await card.getByRole('link', { name: 'Профиль' }).click()
+    return fresh ? `новый кандидат ${who}` : `демо-кандидат ${who}`
   })
   await step('В карточке кандидата нет достижений ФСП', async () => {
     await emp.waitForURL(/\/app\/candidates\/[\w-]+$/)
-    await emp.getByText('Кандидат не привязал ФСП ID или скрыл достижения.').waitFor()
+    await emp.getByText(/Кандидат не привязал ФСП ID|соревновательной истории пока нет/).waitFor()
   })
 }
 
@@ -414,7 +461,7 @@ async function main() {
   console.log(`HyreKit e2e · ${args.base}`)
   const browser = await chromium.launch({ headless: !args.headed, slowMo: args.slow || undefined })
   try {
-    for (const scenario of [smoke, scenarioWithFsp, scenarioWithoutFsp]) {
+    for (const scenario of [smoke, scenarioFsp, scenarioInvite, scenarioNoFsp]) {
       try {
         await scenario(browser)
       } catch (e) {
