@@ -204,6 +204,8 @@ cd frontend && npm ci && npm run dev          # http://localhost:5173, /api пр
 
 Только PostgreSQL и Redis в Docker, код локально: `docker compose -f docker-compose.infra.yml up -d`.
 
+Разработка в [OpenCode](https://opencode.ai): настройка уже в репозитории (`opencode.json`, `.opencode/`) — правила, Linear и GitHub через MCP, агенты `@spec` и `@review`, команды `/task FSP-N`, `/check`, `/docs`, `/e2e`. Подключение — [docs/opencode.md](docs/opencode.md).
+
 ## Переменные окружения
 
 Образец — [.env.example](.env.example).
@@ -333,7 +335,9 @@ flowchart TB
 │   ├── validation/     # результаты валидации методики
 │   ├── presentation/   # питч pptx и pdf на шаблоне ФСП, демо-видео, скриншоты стенда, скрипты сборки
 │   ├── jury.md         # инструкция для жюри
+│   ├── opencode.md     # разработка в OpenCode: подключение, агенты, команды
 │   └── assets/         # логотип, скриншоты
+├── .opencode/          # агенты и команды OpenCode (opencode.json — в корне)
 ├── PRODUCT.md CONTEXT.md DESIGN.md AGENTS.md CHANGELOG.md
 └── docker-compose.yml
 ```

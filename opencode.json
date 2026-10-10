@@ -1,0 +1,42 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": ["CONTEXT.md", "docs/process.md"],
+  "default_agent": "build",
+  "mcp": {
+    "linear": {
+      "type": "remote",
+      "url": "https://mcp.linear.app/mcp",
+      "enabled": true
+    },
+    "github": {
+      "type": "remote",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": { "Authorization": "Bearer {env:GITHUB_TOKEN}" },
+      "oauth": false,
+      "enabled": true
+    },
+    "playwright": {
+      "type": "local",
+      "command": ["npx", "-y", "@playwright/mcp@0.0.83"],
+      "enabled": false
+    }
+  },
+  "permission": {
+    "edit": "allow",
+    "webfetch": "allow",
+    "bash": {
+      "*": "allow",
+      "git push *": "ask",
+      "git push": "ask",
+      "git reset --hard*": "ask",
+      "rm -rf *": "ask",
+      "docker compose down -v*": "ask",
+      "bash deploy/yc/deploy.sh*": "ask",
+      "deploy/yc/deploy.sh*": "ask",
+      "alembic downgrade*": "ask"
+    }
+  },
+  "watcher": {
+    "ignore": ["node_modules/**", "frontend/node_modules/**", "frontend/dist/**", ".venv/**", "**/__pycache__/**", ".dev.db", "uploads/**"]
+  }
+}
