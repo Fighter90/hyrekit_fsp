@@ -26,7 +26,7 @@ import CodeEditor from '../../components/arena/CodeEditor'
 import { Leaderboard, VerdictChip } from '../../components/arena/parts'
 import { VERDICT_LABEL, formatClock } from '../../lib/arena'
 import InviteModal from '../../components/employer/InviteModal'
-import { errorMessage, formatDateTime } from '../../lib/format'
+import { errorMessage, formatDateTime, parseServerDate } from '../../lib/format'
 
 const TEMPLATES: Record<ArenaLanguage, string> = {
   python: 'import sys\n\ndata = sys.stdin.read().split()\n# ваше решение\n\nprint()\n',
@@ -91,7 +91,7 @@ export default function ArenaRoundPage() {
   }, [roundId, loadBoard])
 
   useEffect(() => {
-    if (round.data) setOffset(new Date(round.data.server_time + 'Z').getTime() - Date.now())
+    if (round.data) setOffset(parseServerDate(round.data.server_time).getTime() - Date.now())
   }, [round.data])
 
   useEffect(() => {
@@ -101,7 +101,7 @@ export default function ArenaRoundPage() {
 
   const r = round.data
   const part = r?.participation ?? null
-  const endsAt = part ? new Date(part.ends_at + 'Z').getTime() : null
+  const endsAt = part ? parseServerDate(part.ends_at).getTime() : null
   const left = endsAt ? Math.max(0, (endsAt - (now + offset)) / 1000) : 0
   const active = !!part && part.active && left > 0
   const over = !!part && !active
