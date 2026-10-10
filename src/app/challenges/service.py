@@ -40,5 +40,5 @@ async def evaluate(task: str, answer: str) -> tuple[float, str]:
             data = await llm.complete_json(system=RUBRIC, user=f'Задача:\n{task}\n\nОтвет:\n{answer[:6000]}')
             return max(0.0, min(100.0, float(data.get('score', 0)))), str(data.get('feedback', ''))[:500]
         except Exception:
-            logger.warning('GigaChat недоступен для оценки ответа', exc_info=True)
+            logger.warning('LLM недоступна для оценки ответа', exc_info=True)
     return heuristic_score(task, answer)

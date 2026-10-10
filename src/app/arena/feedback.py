@@ -157,7 +157,8 @@ async def review(variant: Variant, language: str, code: str, result: JudgeResult
         points = [str(p)[:400] for p in data.get('points', []) if str(p).strip()][:5]
         summary = str(data.get('summary', '')).strip()[:600]
         if summary:
-            return {'summary': summary, 'points': points or base['points'], 'source': 'gigachat'}
+            source = getattr(llm, 'provider', None) or 'gigachat'
+            return {'summary': summary, 'points': points or base['points'], 'source': source}
     except Exception:
-        logger.warning('GigaChat недоступен для разбора решения', exc_info=True)
+        logger.warning('LLM недоступна для разбора решения', exc_info=True)
     return base

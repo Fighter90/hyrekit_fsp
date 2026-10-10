@@ -25,6 +25,7 @@ from app.core.seed import run as seed_demo
 from app.employers.router import router as employer_router
 from app.fsp import mock_idp, oidc
 from app.fsp.router import router as fsp_router
+from app.llm.router import router as llm_router
 
 logger = logging.getLogger(__name__)
 
@@ -118,6 +119,7 @@ def create_app() -> FastAPI:
     app.include_router(employer_router, prefix=api_prefix)
     app.include_router(arena_router, prefix=api_prefix)
     app.include_router(fsp_router, prefix=api_prefix)
+    app.include_router(llm_router, prefix=api_prefix)
     if oidc.is_mock():
         app.include_router(mock_idp.router)  # тестовый провайдер ФСП ID (FSP-20)
 

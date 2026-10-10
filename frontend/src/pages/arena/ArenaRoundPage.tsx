@@ -441,7 +441,7 @@ function SubmissionResult({ sub }: { sub: ArenaSubmission }) {
         <div className="arena-feedback">
           <div className="row gap-sm small">
             <Sparkles size={14} /> <strong>Разбор решения</strong>
-            <span className="tag">{sub.feedback.source === 'gigachat' ? 'GigaChat' : 'автоматический разбор'}</span>
+            <span className="tag">{sub.feedback.source === 'gigachat' ? 'GigaChat' : sub.feedback.source === 'yandexgpt' ? 'YandexGPT' : 'автоматический разбор'}</span>
           </div>
           <p>{sub.feedback.summary}</p>
           {sub.feedback.points.length > 0 && (
