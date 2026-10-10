@@ -127,6 +127,8 @@ export interface CandidateProfile {
   privacy: Privacy
   consent_given_at: string | null
   is_visible: boolean
+  /** Гость экспресс-теста для жюри */
+  is_guest?: boolean
   completeness: number
   created_at: string
   updated_at: string
@@ -196,9 +198,12 @@ export interface AttemptItem {
   options: string[]
 }
 
+export type AttemptMode = 'full' | 'express'
+
 export interface AttemptView {
   id: string
   grade: Grade
+  mode?: AttemptMode
   specialization: string
   started_at: string
   deadline_at: string
@@ -211,6 +216,7 @@ export type Suggestion = 'keep' | 'retry_lower' | 'try_higher'
 export interface AttemptResult {
   id: string
   grade_tested: Grade
+  mode?: AttemptMode
   specialization: string
   score: number
   ability: number
@@ -451,4 +457,10 @@ export interface VacancyAssessment {
   seconds: number
   topics: { topic: string; title: string; reason: string }[]
   variants: { items: AttemptItem[]; difficulty_profile: number[] }[]
+}
+
+export interface GuestInput {
+  specialization: string
+  grade: Grade
+  consent: boolean
 }

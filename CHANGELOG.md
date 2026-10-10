@@ -12,6 +12,8 @@
 - Нагрузочная проверка `scripts/load.py` и отчёт `docs/validation/load.md`: p50/p95 ключевых операций при 10 и 50 пользователях (FSP-56).
 - Сопроводительная документация одним файлом: `docs/HyreKit_Documentation.docx` и `.pdf` собираются из `docs/guide/` командой `scripts/build_docs.py`; схемы mermaid рисует `scripts/render_diagrams.cjs` (FSP-57).
 - `docs/openapi.json` и `scripts/export_openapi.py`; CI проверяет, что спецификация совпадает с кодом (FSP-57).
+- Экспресс-тест для жюри без регистрации: страница `/express`, `POST /api/v1/auth/guest`, 5 заданий за 5 минут, гость сразу попадает в подборку работодателя; переменная `GUEST_MODE` (FSP-32).
+- Миграция `0003_express_test` (после `0002_consents_favorites` из FSP-25): `candidate_profiles.is_guest`, `assessment_attempts.mode`.
 
 ## [0.1.0] — 2026-10-10
 

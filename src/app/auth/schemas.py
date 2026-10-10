@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 from app.auth.models import UserRole
 
@@ -146,3 +146,23 @@ class DeleteAccountRequest(BaseModel):
     )
 
     model_config = ConfigDict(str_strip_whitespace=True)
+
+
+class GuestRequest(BaseModel):
+    """Запуск экспресс-теста гостем (FSP-32)."""
+
+    specialization: str
+    grade: str
+    consent: bool = Field(description='Согласие на обработку данных гостевого профиля')
+
+    @model_validator(mode='after')
+    def _check(self) -> GuestRequest:
+        from app.catalog.data import GRADE_CODES, SPEC_CODES
+
+        if self.specialization not in SPEC_CODES:
+            raise ValueError('Неизвестная специализация')
+        if self.grade not in GRADE_CODES:
+            raise ValueError('Неизвестный грейд')
+        if not self.consent:
+            raise ValueError('Нужно согласие на обработку данных')
+        return self

@@ -148,6 +148,48 @@
         }
       }
     },
+    "/api/v1/auth/guest": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Экспресс-тест для жюри: гостевой кандидат без регистрации",
+        "description": "Создаёт отдельного гостевого кандидата и входит под ним (FSP-32).",
+        "operationId": "guest_api_v1_auth_guest_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/refresh": {
       "post": {
         "tags": [
@@ -2941,6 +2983,11 @@
             "type": "boolean",
             "title": "Is Visible"
           },
+          "is_guest": {
+            "type": "boolean",
+            "title": "Is Guest",
+            "default": false
+          },
           "completeness": {
             "type": "integer",
             "title": "Completeness"
@@ -3518,6 +3565,31 @@
           "has_history"
         ],
         "title": "FspSummary"
+      },
+      "GuestRequest": {
+        "properties": {
+          "specialization": {
+            "type": "string",
+            "title": "Specialization"
+          },
+          "grade": {
+            "type": "string",
+            "title": "Grade"
+          },
+          "consent": {
+            "type": "boolean",
+            "title": "Consent",
+            "description": "Согласие на обработку данных гостевого профиля"
+          }
+        },
+        "type": "object",
+        "required": [
+          "specialization",
+          "grade",
+          "consent"
+        ],
+        "title": "GuestRequest",
+        "description": "Запуск экспресс-теста гостем (FSP-32)."
       },
       "HTTPValidationError": {
         "properties": {

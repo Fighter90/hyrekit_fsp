@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { api } from '../api/client'
-import type { RegisterInput, Role, User } from '../api/types'
+import type { GuestInput, RegisterInput, Role, User } from '../api/types'
 
 interface AuthContextType {
   user: User | null
@@ -10,6 +10,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<User>
   /** Возвращает пользователя или null, если сервер попросил подтвердить почту без выдачи токенов. */
   register: (data: RegisterInput) => Promise<{ user: User | null; message: string | null }>
+  /** Гостевой вход для экспресс-теста жюри */
+  startGuest: (data: GuestInput) => Promise<User>
   logout: () => void
   refreshUser: () => Promise<void>
 }
@@ -58,6 +60,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return me
   }, [])
 
+  const startGuest = useCallback(async (data: GuestInput) => {
+    api.setTokens(await api.guest(data))
+    const me = await api.me()
+    setUser(me)
+    return me
+  }, [])
+
   const register = useCallback(async (data: RegisterInput) => {
     const res = await api.register(data)
     if (!('access_token' in res)) {
@@ -77,10 +86,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       login,
       register,
+      startGuest,
       logout,
       refreshUser,
     }),
-    [user, loading, login, register, logout, refreshUser],
+    [user, loading, login, register, startGuest, logout, refreshUser],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

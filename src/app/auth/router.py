@@ -10,6 +10,7 @@ from app.auth import service as auth_service
 from app.auth.models import User
 from app.auth.schemas import (
     DeleteAccountRequest,
+    GuestRequest,
     MessageResponse,
     PasswordChangeRequest,
     RefreshRequest,
@@ -143,6 +144,34 @@ async def login(
         session,
         email=email,
         password=password,
+    )
+
+
+@router.post(
+    '/guest',
+    response_model=TokenResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary='Экспресс-тест для жюри: гостевой кандидат без регистрации',
+)
+@limiter.limit('10/minute')
+async def guest(
+    request: Request,
+    data: GuestRequest,
+    session: AsyncSession = Depends(get_session),
+) -> TokenResponse:
+    """Создаёт отдельного гостевого кандидата и входит под ним (FSP-32)."""
+    from fastapi import HTTPException
+
+    from app.candidates.service import create_guest
+    from app.core.config import get_settings
+    from app.core.security import create_access_token, create_refresh_token
+
+    if not get_settings().guest_mode:
+        raise HTTPException(status_code=404, detail='Гостевой режим выключен')
+    user = await create_guest(session, specialization=data.specialization, grade=data.grade)
+    return TokenResponse(
+        access_token=create_access_token(user.id),
+        refresh_token=create_refresh_token(user.id),
     )
 
 

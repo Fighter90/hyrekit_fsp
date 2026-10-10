@@ -11,6 +11,7 @@ import type { Role } from './api/types'
 
 // Кабинеты грузятся лениво — лендинг остаётся лёгким
 const AppLayout = lazy(() => import('./components/layout/AppLayout'))
+const ExpressPage = lazy(() => import('./pages/auth/ExpressPage'))
 const EmailVerifyPage = lazy(() => import('./pages/auth/EmailVerifyPage'))
 const PrivacyPage = lazy(() => import('./pages/public/PrivacyPage'))
 const TermsPage = lazy(() => import('./pages/public/TermsPage'))
@@ -82,6 +83,7 @@ export default function App() {
 
           <Route element={<CenteredLayout />}>
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/express" element={<ExpressPage />} />
             <Route path="/verify/:token" element={<EmailVerifyPage />} />
             <Route path="/email-verify" element={<EmailVerifyPage />} />
           </Route>

@@ -71,6 +71,7 @@ class CandidateProfileOut(BaseModel):
     privacy: Privacy
     consent_given_at: datetime | None
     is_visible: bool
+    is_guest: bool = False
     completeness: int
     created_at: datetime
     updated_at: datetime

@@ -77,6 +77,11 @@
   animation: fade-up 0.9s 0.36s var(--ease) both;
 }
 .hero__cta.center { justify-content: center; }
+.hero__express {
+  margin: 14px 0 0;
+  color: var(--muted);
+  animation: fade-up 0.9s 0.42s var(--ease) both;
+}
 .hero__bullets {
   list-style: none;
   padding: 0;

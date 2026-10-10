@@ -20,6 +20,7 @@ class AssessmentAttempt(UUIDMixin, TimestampMixin, Base):
     profile_id: Mapped[UUID] = mapped_column(ForeignKey('candidate_profiles.id', ondelete='CASCADE'), index=True)
     specialization: Mapped[str] = mapped_column(String(32))
     grade: Mapped[str] = mapped_column(String(16))
+    mode: Mapped[str] = mapped_column(String(16), default='full', server_default='full')  # full | express
     plan: Mapped[list[dict[str, Any]]] = mapped_column(JSON)
     answers: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     started_at: Mapped[datetime] = mapped_column(DateTime)

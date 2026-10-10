@@ -8,7 +8,7 @@ import pytest
 
 from app.assessment import bank, engine
 from app.assessment.simulate import correct_answer, simulate, wrong_answer
-from app.catalog.data import SPEC_CODES
+from app.catalog.data import GRADE_CODES, GRADE_ORDER, SPEC_BY_CODE, SPEC_CODES
 from app.fsp.provider import MockFspProvider, summarize
 from app.matching.service import ability_fit, extract_stack, grade_fit, norm
 
@@ -126,3 +126,13 @@ def test_vacancy_test_topics_follow_stack_and_keep_difficulty() -> None:
     standard = sorted(engine.materialize(x).level for x in engine.build_blueprint('backend', 'middle', rng_seed=3))
     assert a['difficulty_profile'] == standard
     assert [i['stem'] for i in a['items']] != [i['stem'] for i in b['items']]
+
+
+@pytest.mark.parametrize('grade', GRADE_CODES)
+def test_express_blueprint(grade: str) -> None:
+    """Экспресс-план: 5 тем × 1 задание на уровне проверяемого грейда (FSP-32)."""
+    plan = engine.build_blueprint('backend', grade, rng_seed=7, items_per_topic=engine.EXPRESS_ITEMS_PER_TOPIC)
+    assert len(plan) == 5
+    assert {p.topic for p in plan} == set(SPEC_BY_CODE['backend']['topics'])
+    assert {p.level for p in plan} == {GRADE_ORDER[grade] + 1}
+    assert engine.EXPRESS_SECONDS_PER_ITEM * len(plan) <= 300
