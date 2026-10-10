@@ -74,7 +74,7 @@ if [ -z "$SG_ID" ]; then
   SG_ID=$(yc vpc security-group create --name "$VM-web" --network-id "$NET_ID" \
     --rule 'direction=ingress,port=80,protocol=tcp,v4-cidrs=[0.0.0.0/0]' \
     --rule 'direction=ingress,port=443,protocol=tcp,v4-cidrs=[0.0.0.0/0]' \
-    --rule 'direction=ingress,port=22,protocol=tcp,v4-cidrs=[$SSH_CIDR]' \
+    --rule "direction=ingress,port=22,protocol=tcp,v4-cidrs=[$SSH_CIDR]" \
     --rule 'direction=egress,from-port=0,to-port=65535,protocol=any,v4-cidrs=[0.0.0.0/0]' \
     --format json | jq -r .id)
 fi
