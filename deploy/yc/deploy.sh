@@ -15,6 +15,7 @@ DOMAIN=${DOMAIN:-hyrekit.ru}
 VM=${VM:-hyrekit}
 REGISTRY_NAME=${REGISTRY_NAME:-hyrekit}
 SA_NAME=${SA_NAME:-hyrekit-vm}
+DISK_SIZE=${DISK_SIZE:-30}
 DISK_TYPE=${DISK_TYPE:-network-ssd}  # network-hdd, если квота на SSD исчерпана
 SSH_CIDR=${SSH_CIDR:-0.0.0.0/0}   # сузить до адресов команды
 TAG=${TAG:-$(git rev-parse --short HEAD)}
@@ -99,7 +100,7 @@ else
       "$HERE/cloud-init.yaml" > "$WORK/user-data.yaml"
   yc compute instance create --name "$VM" --hostname "$VM" \
     --platform standard-v3 --cores 2 --memory 4 --core-fraction 100 \
-    --create-boot-disk image-folder-id=standard-images,image-family=ubuntu-2404-lts,size=30,type=$DISK_TYPE \
+    --create-boot-disk image-folder-id=standard-images,image-family=ubuntu-2404-lts,size=$DISK_SIZE,type=$DISK_TYPE \
     --network-interface "subnet-id=$SUBNET_ID,nat-ip-version=ipv4,nat-address=$IP,security-group-ids=$SG_ID" \
     --metadata "hyrekit-tag=$TAG,hyrekit-registry=$REGISTRY" \
     --metadata-from-file "user-data=$WORK/user-data.yaml" \
@@ -110,13 +111,20 @@ fi
 if [ -z "${SKIP_DNS:-}" ]; then
   : "${TIMEWEB_TOKEN:?нужен TIMEWEB_TOKEN или SKIP_DNS=1}"
   log "DNS: $DOMAIN и www → $IP"
-  tw() { curl -sS -H "Authorization: Bearer $TIMEWEB_TOKEN" -H 'Content-Type: application/json' "$@"; }
-  API=https://api.timeweb.cloud/api/v1/domains/$DOMAIN/dns-records
-  # Старые A-записи корня и www удаляются, затем ставятся новые
-  tw "$API" | jq -r '.dns_records[] | select(.type == "A" and ((.subdomain // "") == "" or .subdomain == "www")) | .id' |
-    while read -r id; do tw -X DELETE "$API/$id" >/dev/null; done
-  tw -X POST "$API" -d "{\"type\":\"A\",\"value\":\"$IP\"}" >/dev/null
-  tw -X POST "$API" -d "{\"type\":\"A\",\"value\":\"$IP\",\"subdomain\":\"www\"}" >/dev/null
+  tw() { curl -sS --retry 3 -H "Authorization: Bearer $TIMEWEB_TOKEN" -H 'Content-Type: application/json' "$@"; }
+  # A-запись корня правится на месте (второй корневой A Timeweb не принимает); записи www живут у www.$DOMAIN
+  for fqdn in "$DOMAIN" "www.$DOMAIN"; do
+    API=https://api.timeweb.cloud/api/v1/domains/$fqdn/dns-records
+    id=$(tw "$API" | jq -r '[.dns_records[]? | select(.type == "A")][0].id // empty')
+    if [ -n "$id" ]; then
+      tw -X PATCH "$API/$id" -d "{\"type\":\"A\",\"value\":\"$IP\"}" >/dev/null
+    elif [ "$fqdn" = "$DOMAIN" ]; then
+      tw -X POST "$API" -d "{\"type\":\"A\",\"value\":\"$IP\"}" >/dev/null
+    else
+      tw -X POST "https://api.timeweb.cloud/api/v1/domains/$DOMAIN/dns-records" \
+        -d "{\"type\":\"A\",\"value\":\"$IP\",\"subdomain\":\"www\"}" >/dev/null
+    fi
+  done
 fi
 
 # --- Ожидание и дымовая проверка ---
