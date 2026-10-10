@@ -6,7 +6,7 @@
 
 ### Добавлено
 - Экспресс-тест для жюри без регистрации: страница `/express`, `POST /api/v1/auth/guest`, 5 заданий за 5 минут, гость сразу попадает в подборку работодателя; переменная `GUEST_MODE` (FSP-32).
-- Миграция `0002_express_test`: `candidate_profiles.is_guest`, `assessment_attempts.mode`.
+- Миграция `0003_express_test` (после `0002_consents_favorites` из FSP-25): `candidate_profiles.is_guest`, `assessment_attempts.mode`.
 
 ## [0.1.0] — 2026-10-10
 
