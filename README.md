@@ -212,6 +212,7 @@ pytest --cov=app                                                         # те�
 PYTHONPATH=src python scripts/validate.py                                # валидация методики
 cd frontend && npm run lint && npm run build && npm test                 # фронтенд
 python scripts/smoke.py                                                  # дымовая проверка поднятого стенда
+python scripts/load.py                                                   # нагрузка: p50/p95 ключевых операций
 docker compose logs -f app                                               # логи API
 ```
 
@@ -255,7 +256,7 @@ flowchart TB
 │   └── main.py
 ├── frontend/           # React SPA: лендинг, кабинеты кандидата и работодателя
 ├── tests/              # pytest: сквозной сценарий, методика, ядро
-├── scripts/            # dev.sh, validate.py, smoke.py
+├── scripts/            # dev.sh, validate.py, smoke.py, load.py
 ├── alembic/            # миграции
 ├── deploy/yc/          # площадка Yandex Cloud: compose, Caddy
 ├── docs/
@@ -294,6 +295,7 @@ flowchart TB
 | Методика | `tests/test_method/`: каждое семейство на всех уровнях, монотонность θ, правила грейда, подбор, ФСП |
 | Фронтенд | vitest, 21 тест; ESLint; сборка TypeScript |
 | Стенд | `scripts/smoke.py` против поднятого `docker compose`: 28 шагов от регистрации с письмом до раскрытия контактов, отклика и короткого задания |
+| Нагрузка | `scripts/load.py`: 10 пользователей — p95 до 65 мс, 50 пользователей — 0 ошибок; отчёт в [docs/validation/load.md](docs/validation/load.md) |
 | Валидация | `scripts/validate.py`: равная сложность, утечка, повторяемость, дискриминативность, точность грейда, precision@10 и nDCG@10 против базовых способов |
 
 Ключевые результаты валидации:

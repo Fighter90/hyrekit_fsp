@@ -2,6 +2,11 @@
 
 Формат — [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/), версии — [SemVer](https://semver.org/lang/ru/).
 
+## [Unreleased]
+
+### Добавлено
+- Нагрузочная проверка `scripts/load.py` и отчёт `docs/validation/load.md`: p50/p95 ключевых операций при 10 и 50 пользователях (FSP-56).
+
 ## [0.1.0] — 2026-10-10
 
 Первая версия к сдаче хакатона ФСП.
