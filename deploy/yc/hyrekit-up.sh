@@ -1,0 +1,35 @@
+#!/bin/bash
+# На каждой загрузке: тег версии из метаданных ВМ → pull → up. Обновление = новый тег + перезапуск ВМ.
+set -euo pipefail
+cd /opt/hyrekit
+md() { curl -sf -H 'Metadata-Flavor: Google' "http://169.254.169.254/computeMetadata/v1/instance/attributes/$1"; }
+# Тег и реестр из метаданных (обновление без пересоздания ВМ); если ответ не похож на значение — версия, вшитая при создании
+TAG=$(md hyrekit-tag 2>/dev/null || true); REGISTRY=$(md hyrekit-registry 2>/dev/null || true)
+[[ "$TAG" =~ ^[A-Za-z0-9._-]{1,128}$ ]] || TAG=__TAG__
+[[ "$REGISTRY" =~ ^cr\.yandex/[a-z0-9]+$ ]] || REGISTRY=__REGISTRY__
+echo "hyrekit-up: REGISTRY=$REGISTRY TAG=$TAG"
+if [ ! -f secrets.env ]; then
+  printf 'POSTGRES_PASSWORD=%s\nSECRET_KEY=%s\n' "$(openssl rand -hex 16)" "$(openssl rand -hex 32)" > secrets.env
+  chmod 600 secrets.env
+fi
+. ./secrets.env
+cat > .env <<ENV
+REGISTRY=$REGISTRY
+TAG=$TAG
+POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+SECRET_KEY=$SECRET_KEY
+ENVIRONMENT=production
+DEBUG=false
+PUBLIC_URL=https://hyrekit.ru
+CORS_ORIGINS=["https://hyrekit.ru","https://www.hyrekit.ru"]
+SEED_DEMO=true
+DOCS_ENABLED=true
+MAIL_FROM=HyreKit <noreply@hyrekit.ru>
+ENV
+# Дополнительные переменные (GigaChat, SMTP) — base64 в метаданных; без ключа сервер метаданных отдаёт не base64
+if EXTRA=$(md hyrekit-extra-env 2>/dev/null | base64 -d 2>/dev/null) && ! printf '%s\n' "$EXTRA" | grep -qvE '^([A-Za-z_][A-Za-z0-9_]*=.*|#.*|)$'; then
+  printf '%s\n' "$EXTRA" >> .env
+fi
+docker login --username json_key --password-stdin cr.yandex < sa-key.json
+docker compose -f compose.prod.yaml --env-file .env pull
+docker compose -f compose.prod.yaml --env-file .env up -d --remove-orphans
