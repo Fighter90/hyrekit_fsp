@@ -1,7 +1,7 @@
 """Импорт всех ORM-моделей: нужен Alembic и create_all, чтобы метаданные были полными."""
 
 from app.arena.models import ArenaParticipant, ArenaRating, ArenaRound, ArenaSubmission
-from app.assessment.models import AssessmentAttempt
+from app.assessment.models import AssessmentAttempt, ItemCalibration
 from app.auth.models import User
 from app.candidates.models import CandidateProfile, ConsentEvent
 from app.challenges.models import Challenge, ChallengeSubmission
@@ -22,6 +22,7 @@ __all__ = [
     'ConsentEvent',
     'Favorite',
     'Invitation',
+    'ItemCalibration',
     'User',
     'Vacancy',
 ]

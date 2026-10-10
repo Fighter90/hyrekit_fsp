@@ -63,8 +63,14 @@ def build_blueprint(
     rng_seed: int | None = None,
     topics: list[str] | None = None,
     items_per_topic: int = ITEMS_PER_TOPIC,
+    excluded: frozenset[str] = frozenset(),
 ) -> list[PlannedItem]:
-    """Формирует план попытки: темы × уровни × случайные семейства и зёрна."""
+    """Формирует план попытки: темы × уровни × случайные семейства и зёрна.
+
+    `excluded` — семейства, которые мониторинг утечек снял с выдачи
+    (`assessment.calibration`). Если в теме на уровне других не осталось,
+    берутся исключённые: тест без темы хуже, чем тест с известным заданием.
+    """
     import random
 
     rng = random.Random(rng_seed if rng_seed is not None else secrets.randbits(64))
@@ -79,6 +85,7 @@ def build_blueprint(
         for slot, level in enumerate(levels):
             # Только семейства, осмысленные на этом уровне, — сложность задания равна плановой.
             families = bank.topics(level).get(topic) or bank.topics(level)['algorithms']
+            families = [f for f in families if f not in excluded] or families
             fresh = [f for f in families if f not in used] or families
             # Первое задание темы и всё сверх лимита — генеративные, если такие есть
             # (при нехватке семейств допускается то же семейство с другим зерном).

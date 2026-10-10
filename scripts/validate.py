@@ -27,7 +27,7 @@ from types import SimpleNamespace
 os.environ.setdefault('SECRET_KEY', 'validation-only-secret-key-not-for-production-use')
 os.environ.setdefault('DATABASE_URL', 'sqlite+aiosqlite://')
 
-from app.assessment import engine
+from app.assessment import calibration, engine
 from app.assessment.simulate import simulate
 from app.candidates.service import utcnow
 from app.catalog.data import GRADE_CODES, GRADE_ORDER, SPEC_BY_CODE, SPEC_CODES
@@ -284,6 +284,44 @@ def check_matching(rng: random.Random, rounds: int = 20) -> list[tuple[str, floa
     return rows
 
 
+def _calibration_run(
+    rng: random.Random, n: int, leaked: str | None = None, share: float = 0.0, excluded: frozenset[str] = frozenset()
+) -> tuple[list[calibration.FamilyStat], int]:
+    """n попыток; доля share кандидатов знает ответы семейства leaked. Возвращает статистику и показы leaked."""
+    from app.assessment.simulate import answer_attempt, correct_answer
+
+    observations: list[calibration.Observation] = []
+    shown = 0
+    for _ in range(n):
+        grade = rng.choice(GRADE_CODES)
+        theta = engine.cut(grade) + 0.5 + rng.gauss(0, 1)
+        plan = engine.build_blueprint(rng.choice(SPEC_CODES), grade, rng_seed=rng.randrange(2**62), excluded=excluded)
+        answers = answer_attempt(plan, theta, rng)
+        cheat = leaked is not None and rng.random() < share
+        for p in plan:
+            if p.family == leaked:
+                shown += 1
+                if cheat:
+                    answers[p.id] = correct_answer(engine.materialize(p))
+        observations += calibration.attempt_observations(plan, answers, grade)
+    return calibration.family_stats(observations), shown
+
+
+def check_leak_monitoring(rng: random.Random, n: int = 2000) -> dict[str, object]:
+    """Мониторинг утечек: ложные тревоги на честных данных и обнаружение слитого семейства."""
+    honest, _ = _calibration_run(rng, n)
+    generative = sorted((s for s in honest if not s.conceptual), key=lambda s: -s.shows)
+    leaked = generative[len(generative) // 2].family  # семейство со средним числом показов
+    runs = []
+    for share in (0.25, 0.5, 0.75):
+        stats, _ = _calibration_run(rng, n, leaked, share)
+        target = next(s for s in stats if s.family == leaked)
+        others = sum(1 for s in stats if s.family != leaked and s.status == 'leak')
+        runs.append((share, target, others))
+    _, shown_after = _calibration_run(rng, 500, leaked, 0.5, excluded=frozenset({leaked}))
+    return {'honest': honest, 'leaked': leaked, 'runs': runs, 'shown_after': shown_after}
+
+
 def main() -> int:
     rng = random.Random(SEED)
     lines = [
@@ -401,6 +439,42 @@ def main() -> int:
     for title, *vals in check_matching(rng):
         lines.append(f'| {title} | ' + ' | '.join(f'{x:.2f}' for x in vals) + ' |')
     lines.append('')
+
+    leak = check_leak_monitoring(random.Random(SEED + 33))
+    honest = leak['honest']
+    worst = max(honest, key=lambda s: s.drift)  # type: ignore[attr-defined]
+    lines += [
+        '## 6. Мониторинг утечек заданий',
+        '',
+        'Методика — `src/app/assessment/calibration.py`. По каждому ответу θ кандидата оценивается заново '
+        'только по генеративным заданиям той же попытки без самого задания; ожидаемая доля верных — σ(θ − b). '
+        'Дрейф семейства — доля верных минус ожидаемая, за вычетом общего для всех семейств сдвига. '
+        f'Утечка — дрейф выше {calibration.DRIFT_THRESHOLD:.0%} и z выше {calibration.Z_THRESHOLD:g} '
+        f'при не меньше чем {calibration.MIN_SHOWS} показах; такое семейство исключается из выдачи.',
+        '',
+        f'**Честные данные.** 2 000 попыток со способностями вокруг заявленного грейда. Ложных тревог: '
+        f'{sum(s.status == "leak" for s in honest)} из {len(honest)} семейств. '  # type: ignore[attr-defined]
+        f'Наибольший дрейф — {worst.drift:+.1%} (z = {worst.z:+.1f}, `{worst.family}`).',
+        '',
+        f'**Симулированная утечка.** Ответы семейства `{leak["leaked"]}` знает часть кандидатов; '
+        'они отвечают на него верно, на остальные задания — по своей способности.',
+        '',
+        '| Знают ответы | Показов | Доля верных | Ожидалось | Дрейф | z | Статус | Ложных тревог по другим |',
+        '| --: | --: | --: | --: | --: | --: | -- | --: |',
+        *[
+            f'| {share:.0%} | {s.shows} | {s.solve_rate:.0%} | {s.expected_rate:.0%} | {s.drift:+.1%} '
+            f'| {s.z:+.1f} | {calibration.STATUS_TITLES[s.status]} | {others} |'
+            for share, s, others in leak['runs']  # type: ignore[attr-defined]
+        ],
+        '',
+        f'После исключения семейство не выдаётся: в 500 новых попытках показов — {leak["shown_after"]}.',
+        '',
+        f'Порог {calibration.DRIFT_THRESHOLD:.0%} ниже, чем 15 п.п. из постановки FSP-33: утечка к четверти '
+        f'кандидатов даёт дрейф {leak["runs"][0][1].drift:+.1%} и с порогом 15 п.п. прошла бы незамеченной. '  # type: ignore[index]
+        f'Честный дрейф доходит до {worst.drift:+.1%}, поэтому семейство исключается, только если и z выше '
+        f'{calibration.Z_THRESHOLD:g}: у честных семейств z не больше {max(s.z for s in honest):+.1f}.',  # type: ignore[attr-defined]
+        '',
+    ]
 
     report = '\n'.join(lines)
     OUT.parent.mkdir(parents=True, exist_ok=True)

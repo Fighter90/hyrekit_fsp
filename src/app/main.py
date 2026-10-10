@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -13,6 +14,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from app.arena.router import router as arena_router
+from app.assessment.service import calibration_loop
 from app.auth.router import router as auth_router
 from app.candidates.router import router as candidate_router
 from app.catalog.router import router as catalog_router
@@ -36,7 +38,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             await seed_demo()
         except Exception:
             logger.warning('Seed skipped (DB may not be ready)', exc_info=True)
+    calibration_task = None
+    if settings.calibration_interval_minutes > 0 and settings.environment not in ('testing', 'test'):
+        calibration_task = asyncio.create_task(calibration_loop(settings.calibration_interval_minutes))
     yield
+    if calibration_task:
+        calibration_task.cancel()
     logger.info('Shutting down HyreKit API...')
 
 

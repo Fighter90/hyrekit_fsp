@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+import logging
 from datetime import timedelta
 from typing import Any
 from uuid import UUID
@@ -9,12 +11,14 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.assessment import engine
-from app.assessment.models import AssessmentAttempt
+from app.assessment import calibration, engine
+from app.assessment.models import AssessmentAttempt, ItemCalibration
 from app.candidates.models import CandidateProfile
 from app.candidates.service import next_grade_change_at, touch, utcnow
 from app.catalog.data import GRADE_CODES, category_code
 from app.core.exceptions import BadRequest, Conflict, NotFound
+
+logger = logging.getLogger(__name__)
 
 
 def eligibility(profile: CandidateProfile) -> dict[str, Any]:
@@ -107,6 +111,7 @@ async def start(session: AsyncSession, profile: CandidateProfile, grade: str) ->
         profile.specialization,  # type: ignore[arg-type]
         grade,
         items_per_topic=engine.EXPRESS_ITEMS_PER_TOPIC if express else engine.ITEMS_PER_TOPIC,
+        excluded=await excluded_families(session),
     )
     seconds = engine.EXPRESS_SECONDS_PER_ITEM if express else engine.SECONDS_PER_ITEM
     now = utcnow()
@@ -177,3 +182,83 @@ async def history(session: AsyncSession, profile: CandidateProfile) -> list[Asse
         .order_by(AssessmentAttempt.finished_at.desc())
     )
     return list((await session.execute(stmt)).scalars())
+
+
+# ── Мониторинг утечек (FSP-33) ───────────────────────────────────────────────
+async def excluded_families(session: AsyncSession) -> frozenset[str]:
+    """Семейства, снятые с выдачи последней калибровкой."""
+    stmt = select(ItemCalibration.family).where(ItemCalibration.excluded.is_(True))
+    return frozenset((await session.execute(stmt)).scalars())
+
+
+async def recalibrate(
+    session: AsyncSession, *, window_days: int = calibration.WINDOW_DAYS, now: Any = None
+) -> list[calibration.FamilyStat]:
+    """Пересчёт статистики семейств по попыткам за окно и запись статусов.
+
+    Семейства, которых в окне не было, сохраняют прежний статус: утечка
+    снимается только новыми данными, а не отсутствием показов.
+    """
+    now = now or utcnow()
+    stmt = select(AssessmentAttempt).where(
+        AssessmentAttempt.finished_at.is_not(None),
+        AssessmentAttempt.finished_at >= now - timedelta(days=window_days),
+    )
+    observations: list[calibration.Observation] = []
+    for attempt in (await session.execute(stmt)).scalars():
+        observations += calibration.attempt_observations(_plan(attempt), attempt.answers or {}, attempt.grade)
+    stats = calibration.family_stats(observations)
+    rows = {r.family: r for r in (await session.execute(select(ItemCalibration))).scalars()}
+    for s in stats:
+        row = rows.get(s.family)
+        if row is None:
+            row = ItemCalibration(family=s.family)
+            session.add(row)
+        row.topic = s.topic
+        row.shows = s.shows
+        row.correct = s.correct
+        row.solve_rate = round(s.solve_rate, 4)
+        row.expected_rate = round(s.expected_rate, 4)
+        row.drift = round(s.drift, 4)
+        row.z = round(s.z, 2)
+        row.offset = round(s.offset, 3)
+        row.status = s.status
+        row.excluded = s.excluded
+        row.calibrated_at = now
+    await session.flush()
+    return stats
+
+
+CALIBRATION_LOCK = 33_0033  # ключ advisory-lock PostgreSQL: калибровку ведёт один воркер
+
+
+async def run_calibration() -> list[calibration.FamilyStat] | None:
+    """Калибровка в отдельной транзакции; на PostgreSQL — под advisory-lock."""
+    from sqlalchemy import text
+
+    from app.core.database import get_session_factory
+
+    async with get_session_factory()() as session:
+        if session.bind.dialect.name == 'postgresql':
+            locked = (
+                await session.execute(text('SELECT pg_try_advisory_xact_lock(:k)'), {'k': CALIBRATION_LOCK})
+            ).scalar()
+            if not locked:
+                return None
+        stats = await recalibrate(session)
+        await session.commit()
+    leaks = [s.family for s in stats if s.excluded]
+    if leaks:
+        logger.warning('Мониторинг утечек: исключены семейства %s', ', '.join(leaks))
+    return stats
+
+
+async def calibration_loop(interval_minutes: int) -> None:
+    """Периодическая калибровка: первый прогон через минуту после старта."""
+    await asyncio.sleep(60)
+    while True:
+        try:
+            await run_calibration()
+        except Exception:
+            logger.warning('Калибровка заданий не удалась', exc_info=True)
+        await asyncio.sleep(interval_minutes * 60)
