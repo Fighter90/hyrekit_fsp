@@ -178,18 +178,29 @@ def _kill(pid: int) -> None:
         os.killpg(pid, signal.SIGKILL)
 
 
-def _run_process(argv: list[str], stdin: str, wall: float) -> dict[str, Any]:
-    """Запуск с перехватом rusage: время процессора и пиковая память."""
+def _run_process(cfg: dict[str, Any], stdin: str, wall: float) -> dict[str, Any]:
+    """Запуск обёртки песочницы: вывод, время процессора и пиковая память решения.
+
+    Обёртка запускает решение дочерним процессом и пишет его статус и rusage
+    в канал ``report_fd``; без отчёта (обёртку убили по таймеру) берётся
+    rusage самой обёртки.
+    """
     limit = OUTPUT_LIMIT_KB * 1024
-    proc = subprocess.Popen(
-        argv,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        start_new_session=True,
-        close_fds=True,
-        env={'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8'},
-    )
+    report_r, report_w = os.pipe()
+    argv = [sys.executable, '-I', '-S', '-B', str(SANDBOX), json.dumps({**cfg, 'report_fd': report_w})]
+    try:
+        proc = subprocess.Popen(
+            argv,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            start_new_session=True,
+            close_fds=True,
+            pass_fds=(report_w,),
+            env={'PATH': '/usr/bin:/bin', 'LANG': 'C.UTF-8'},
+        )
+    finally:
+        os.close(report_w)
     out = bytearray()
     err = bytearray()
     state = {'overflow': False, 'timeout': False}
@@ -233,17 +244,27 @@ def _run_process(argv: list[str], stdin: str, wall: float) -> dict[str, Any]:
     finally:
         timer.cancel()
     elapsed = time.monotonic() - started
-    proc.returncode = os.waitstatus_to_exitcode(status)
     _kill(proc.pid)
+    with os.fdopen(report_r, 'rb') as fh:
+        raw_report = fh.read()
+    try:
+        report = json.loads(raw_report) if raw_report else None
+    except ValueError:
+        report = None
+    if report:
+        status, cpu, maxrss = int(report['status']), float(report['cpu']), int(report['maxrss_kb'])
+    else:
+        cpu, maxrss = usage.ru_utime + usage.ru_stime, int(usage.ru_maxrss)
+    proc.returncode = os.waitstatus_to_exitcode(status)
     for t in threads:
         t.join(timeout=2)
     return {
         'code': proc.returncode,
         'stdout': bytes(out[:limit]).decode('utf-8', 'replace'),
         'stderr': bytes(err).decode('utf-8', 'replace'),
-        'cpu': usage.ru_utime + usage.ru_stime,
+        'cpu': cpu,
         'wall': elapsed,
-        'maxrss_kb': int(usage.ru_maxrss),
+        'maxrss_kb': maxrss,
         'overflow': state['overflow'],
         'timeout': state['timeout'],
     }
@@ -306,11 +327,10 @@ def judge_sync(
             'cpu_seconds': int(TIME_LIMIT_S) + 1,
             **limits,
         }
-        wrapper = [sys.executable, '-I', '-S', '-B', str(SANDBOX), json.dumps(cfg)]
         wall = TIME_LIMIT_S * WALL_FACTOR + 1
         for case in tests:
             with _slots:
-                raw = _run_process(wrapper, case.input, wall)
+                raw = _run_process(cfg, case.input, wall)
             verdict, message = _classify(raw, language, case.expected)
             results.append(
                 TestResult(

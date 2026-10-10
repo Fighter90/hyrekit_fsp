@@ -24,6 +24,16 @@ def test_python_verdicts() -> None:
     assert run('x = bytearray(600 * 1024 * 1024)')[0] == 'MLE'
 
 
+def test_memory_is_measured_for_solution_not_for_parent() -> None:
+    """Пиковая память большого процесса приложения не попадает в замер решения."""
+    ballast = bytearray(400 * 1024 * 1024)
+    ballast[::4096] = b'x' * len(ballast[::4096])  # страницы реально заняты
+    r = judge_sync('python', OK_PY, SUM)
+    del ballast
+    assert r.verdict == 'OK'
+    assert r.memory_kb < 100 * 1024
+
+
 @pytest.mark.parametrize(
     ('code', 'reason'),
     [

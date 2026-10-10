@@ -266,6 +266,23 @@ def main(argv: list[str]) -> None:
     cfg = json.loads(argv[1])
     os.chdir(cfg['workdir'])
     apply_rlimits(cfg)
+    report_fd = cfg.get('report_fd')
+    if report_fd is not None:
+        # Пиковая память процесса наследуется через fork и exec: обёртку породил
+        # большой процесс приложения, и его RSS попал бы в замер. Решение
+        # запускается дочерним процессом маленькой обёртки, а она сообщает его
+        # rusage и статус через отдельный канал.
+        pid = os.fork()
+        if pid:
+            _, status, usage = os.wait4(pid, 0)
+            report = {
+                'status': status,
+                'cpu': usage.ru_utime + usage.ru_stime,
+                'maxrss_kb': int(usage.ru_maxrss),
+            }
+            os.write(report_fd, json.dumps(report).encode())
+            os._exit(0)
+        os.close(report_fd)
     layers = {'landlock': apply_landlock(cfg['read'], cfg['exec']), 'seccomp': apply_seccomp()}
     if cfg.get('require_kernel') and not (layers['landlock'] and layers['seccomp']):
         sys.stderr.write('sandbox: kernel isolation unavailable\n')

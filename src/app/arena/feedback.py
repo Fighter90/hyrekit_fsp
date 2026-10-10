@@ -135,7 +135,9 @@ def rules_feedback(variant: Variant, language: str, code: str, result: JudgeResu
         elif result.verdict == 'RE' and result.message:
             last = result.message.strip().splitlines()[-1]
             points.append(f'Причина: {last[:200]}')
-    points.extend(python_notes(code) if language == 'python' else javascript_notes(code))
+    if result.verdict != 'OK':
+        # замечания по коду объясняют неудачу; у верного решения они только шумят
+        points.extend(python_notes(code) if language == 'python' else javascript_notes(code))
     return {'summary': summary, 'points': points[:5], 'source': 'rules'}
 
 
