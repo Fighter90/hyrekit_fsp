@@ -9,14 +9,14 @@ Linear: FSP-50, FSP-51. Пункты ТЗ: 2.1 «Просмотр ваканси
 - Кандидату видны только опубликованные вакансии; фильтры по специализации, грейду, тексту.
 - Повторный отклик на ту же вакансию — 409.
 - Отклик раскрывает контакты кандидата компании; статусы как у приглашений.
-- Короткое задание: компания, направление, срок. Ответ оценивается GigaChat по рубрике или эвристикой; ответ обновляет свежесть профиля.
+- Короткое задание: компания, направление, срок. Ответ оценивается моделью по рубрике (GigaChat → YandexGPT) или эвристикой, если не ответила ни одна модель; ответ обновляет свежесть профиля.
 
 ## Критерии приёмки (EARS)
 - WHEN кандидат откликается THE SYSTEM SHALL создать отклик со статусом «отправлено» и показать его работодателю с контактами.
 - WHEN кандидат отвечает на задание THE SYSTEM SHALL сохранить оценку и отзыв и обновить активность профиля.
 
 ## Интерфейсы
-`GET /candidate/vacancies`, `POST /candidate/vacancies/{id}/apply`, `GET /candidate/applications`, `GET /employer/applications`, `POST /employer/applications/{id}/status`, `GET/POST /candidate/challenges`, `GET/POST /employer/challenges`.
+`GET /candidate/vacancies`, `POST /candidate/vacancies/{id}/apply`, `GET /candidate/applications`, `GET /employer/applications`, `POST /employer/applications/{id}/status`, `GET /candidate/challenges`, `POST /candidate/challenges/{id}/submit`, `GET/POST /employer/challenges`, `GET /employer/challenges/{id}/submissions`.
 
 ## План тестов
 `tests/test_flow.py`.

@@ -36,6 +36,7 @@
 | React / React DOM | 19.2.4 | MIT | Интерфейс |
 | React Router | 6.30.3 | MIT | Маршруты кабинетов |
 | lucide-react | 0.576.0 | ISC | Иконки |
+| CodeMirror | 6.0.2 (`@codemirror/view` 6.43.14, `@codemirror/state` 6.7.6) | MIT | Редактор кода в Code Arena |
 | TypeScript | 5.8.3 | Apache-2.0 | Типы |
 | Vite | 6.4.1 | MIT | Сборка и dev-сервер |
 | Vitest, Testing Library | 4.0.18, 16.3.2 | MIT | Тесты |
@@ -50,6 +51,8 @@
 | nginx | 1.27 (alpine) | Статика фронтенда и прокси `/api` |
 | Mailpit | 1.21 | Перехват писем в локальном стенде |
 | Docker Compose | v2 | Запуск всех компонентов одной командой |
+| Caddy | 2.8 (alpine) | HTTPS с сертификатом Let's Encrypt на площадке (`deploy/yc/compose.prod.yaml`) |
+| Node.js | 20 (бинарник в образе `app`) | Запуск решений Code Arena на JavaScript |
 
 ## Шрифты и бренд
 

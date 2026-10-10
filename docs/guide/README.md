@@ -8,7 +8,7 @@
 
 | Что | Адрес |
 | -- | -- |
-| Прототип | <https://hyrekit.ru> — площадка в Yandex Cloud готовится к выкатке; до неё прототип запускается локально за одну команду ([раздел 5](05-zapusk-i-demo.md)). Демо-входы: `candidate@hyrekit.ru` и `employer@hyrekit.ru`, пароль `HyreKit2026` |
+| Прототип | <https://hyrekit.ru> — площадка в Yandex Cloud работает; локально прототип запускается за одну команду ([раздел 5](05-zapusk-i-demo.md)). Демо-входы: `candidate@hyrekit.ru` и `employer@hyrekit.ru`, пароль `HyreKit2026` |
 | Описание API (Swagger) | <https://hyrekit.ru/docs>, локально — <http://localhost:8000/docs> |
 | Одним файлом | [HyreKit_Documentation.docx](../HyreKit_Documentation.docx) и [.pdf](../HyreKit_Documentation.pdf) — собраны из этих разделов командой `python scripts/build_docs.py` |
 | Спецификация OpenAPI | [docs/openapi.json](../openapi.json) — выгружается `scripts/export_openapi.py`, CI проверяет, что файл совпадает с кодом |

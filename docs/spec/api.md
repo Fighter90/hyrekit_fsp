@@ -10,7 +10,7 @@
 ```
 
 Коды: `400` валидация, `401` нет токена, `403` чужая роль или чужой ресурс, `404` нет объекта,
-`409` конфликт состояния (например, смена грейда раньше срока), `422` ошибка схемы.
+`409` конфликт состояния (например, смена грейда раньше срока), `422` ошибка схемы, `429` превышен лимит запросов.
 
 ## Роли
 
@@ -32,7 +32,14 @@
 | POST | `/auth/refresh` | `{refresh_token}` → токены |
 | GET | `/auth/verify/{token}` | подтверждение почты; ссылка из письма ведёт на страницу фронтенда `/verify/{token}` |
 | POST | `/auth/resend-verification` | повторная отправка письма |
+| POST | `/auth/logout` | 204; клиент удаляет токены |
 | GET | `/auth/me` | `User` |
+| PUT | `/auth/me` | `{full_name?, email?, phone?, city?}` → `User` |
+| DELETE | `/auth/me` | `{password, confirmation: "УДАЛИТЬ"}` → `{message}`; удаление через 30 дней |
+| POST | `/auth/me/restore` | `{message}`: отмена удаления в течение 30 дней |
+| PUT | `/auth/me/password` | `{current_password, new_password}` → 204 |
+| POST | `/auth/me/avatar` | `multipart/form-data` `file` (JPEG, PNG, WebP до 2 МБ) → `{message}` |
+| DELETE | `/auth/me/avatar` | 204 |
 
 ```ts
 type Role = 'candidate' | 'employer'
@@ -99,6 +106,7 @@ interface CandidateProfile {
   privacy: { show_full_name: boolean; show_city: boolean; show_fsp: boolean; show_salary: boolean }
   consent_given_at: string | null          // согласие 152-ФЗ; без него профиль не виден работодателям
   is_visible: boolean                      // есть категория + согласие
+  is_guest: boolean                        // гость экспресс-теста (FSP-32)
   completeness: number                     // 0..100
   created_at: string; updated_at: string
 }
@@ -114,7 +122,8 @@ interface ResumeParseResult { fields: CandidateProfileUpdate; source: 'gigachat'
 interface FspAchievement { event: string; discipline: string; level: string; place: number | null;
   year: number; role: string | null; relevant_to: string[] }
 interface FspSummary { fsp_id: string; athlete_name: string | null; achievements: FspAchievement[];
-  score: number /*0..100*/; has_history: boolean }
+  score: number /*0..100*/; has_history: boolean
+  verified: boolean /* ФСП ID подтверждён входом через ФСП ID (FSP-20) */ }
 ```
 
 ### Опрос и тестирование
@@ -126,6 +135,7 @@ interface FspSummary { fsp_id: string; athlete_name: string | null; achievements
 | POST | `/candidate/assessment/start` | `{grade}` → `AttemptView` (задания без правильных ответов) |
 | POST | `/candidate/assessment/{attempt_id}/answer` | `{item_id, answer}` → `{saved: true}` |
 | POST | `/candidate/assessment/{attempt_id}/finish` | → `AttemptResult` |
+| GET | `/candidate/assessment/current` | `AttemptView` незавершённой попытки или `null` |
 | GET | `/candidate/assessment/history` | `AttemptResult[]` |
 
 ```ts
@@ -133,9 +143,9 @@ interface Eligibility { declared_grade: Grade | null; current_grade: Grade | nul
   allowed_grades: Grade[]; locked_until: string | null; reason: string | null }
 interface AttemptItem { id: string; topic: string; difficulty: number /*1..5*/; kind: 'single' | 'multi' | 'number'
   stem: string; code: string | null; options: string[] /* пусто для number */ }
-interface AttemptView { id: string; grade: Grade; specialization: string; started_at: string
+interface AttemptView { id: string; grade: Grade; specialization: string; mode: 'full' | 'express'; started_at: string
   deadline_at: string; items: AttemptItem[]; answers: Record<string, string | string[]> }
-interface AttemptResult { id: string; grade_tested: Grade; specialization: string
+interface AttemptResult { id: string; grade_tested: Grade; specialization: string; mode: 'full' | 'express'
   score: number /*0..100*/; ability: number /*theta*/; correct: number; total: number
   passed: boolean; assigned_grade: Grade | null; suggestion: 'keep' | 'retry_lower' | 'try_higher'
   by_topic: { topic: string; correct: number; total: number }[]; finished_at: string }
@@ -280,5 +290,6 @@ interface InvitationInput { candidate_id: string; vacancy_id?: string | null; ti
 
 ## Служебное
 
-| GET | `/health` | `{status: "ok"}` |
+| Метод | Путь | Описание |
 |---|---|---|
+| GET | `/health` (и `/api/v1/health`) | `{status: "healthy", version}` |

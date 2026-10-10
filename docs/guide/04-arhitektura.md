@@ -40,6 +40,9 @@ flowchart LR
 | Компании и вакансии | `employers` | компания, потребности |
 | Приглашения и отклики | `hiring` | приглашения, вакансии |
 | Короткие задания | `challenges` | челленджи в обоих кабинетах |
+| Code Arena: раунды, песочница, вердикты, рейтинг Glicko-2 | `arena` | Code Arena в обоих кабинетах |
+| LLM-провайдеры: GigaChat → YandexGPT → правила | `llm` | подпись под разбором резюме и решения Arena |
+| Вход и привязка через ФСП ID (OIDC), тестовый провайдер | `fsp.oidc`, `fsp.router`, `fsp.mock_idp` | вход, настройки, `/fsp-callback` |
 
 ## Компонентная архитектура
 
@@ -90,9 +93,24 @@ erDiagram
   arena_participants ||--o{ arena_submissions : ""
   candidate_profiles ||--o| arena_ratings : ""
   companies ||--o{ arena_rounds : "спонсор"
+  item_calibration {
+    varchar family
+    varchar status
+    boolean excluded
+  }
 ```
 
-Подробно по полям — [docs/schema.md](../schema.md). Схема создаётся миграцией `alembic/versions/0001_initial_schema.py`, журнал согласий и избранное добавляет `0002_consents_favorites.py`, таблицы Code Arena — `0005_code_arena.py`.
+Подробно по полям — [docs/schema.md](../schema.md). Схема строится миграциями `alembic/versions/` (`alembic upgrade head`):
+
+| Миграция | Что делает |
+| -- | -- |
+| `0001_initial_schema` | Исходная схема |
+| `0002_consents_favorites` | Журнал согласий и избранное работодателя |
+| `0003_express_test` | `candidate_profiles.is_guest`, `assessment_attempts.mode` для экспресс-теста |
+| `0004_strict_grade_cut` | Перенос сохранённых θ на шкалу честного порога |
+| `0005_code_arena` | Таблицы Code Arena |
+| `0006_item_calibration` | `item_calibration` — статус семейств заданий |
+| `0007_fsp_oidc` | `candidate_profiles.fsp_sub` — ФСП ID, подтверждённый входом |
 
 ## Описание API
 
@@ -100,12 +118,15 @@ erDiagram
 
 | Группа | Префикс | Основные методы |
 | -- | -- | -- |
-| Авторизация | `/api/v1/auth` | `register`, `login`, `refresh`, `verify/{token}`, `resend-verification`, `me` |
+| Авторизация | `/api/v1/auth` | `register`, `login`, `guest`, `refresh`, `logout`, `verify/{token}`, `resend-verification`, `me` (`GET`, `PUT`, `DELETE`), `me/restore`, `me/password`, `me/avatar` |
+| ФСП ID | `/api/v1/auth/fsp` | `config`, `start`, `callback` — вход и привязка по OpenID Connect |
 | Справочник | `/api/v1/catalog` | `GET` — специализации, грейды, отрасли, форматы работы |
 | Кандидат | `/api/v1/candidate` | профиль, резюме, PDF, настройки, ФСП, опрос, тест, приглашения, вакансии, отклики, задания |
 | Работодатель | `/api/v1/employer` | компания, вакансии, подборка, тест под вакансию, банк кандидатов, категории, приглашения, отклики, задания |
 | Code Arena | `/api/v1/arena` | раунды, вход, запуск на примерах, отправка, таблица и поток SSE, разбор задач, рейтинг, витрина и раунды работодателя |
-| Служебное | `/health` | проверка живости |
+| LLM | `/api/v1/llm` | `GET /status` — состояние GigaChat и YandexGPT |
+| Тестовый провайдер ФСП ID | `/api/v1/fsp-id` | discovery, `authorize`, `token`, `userinfo`, `jwks`; работает, пока не задан `FSP_OIDC_ISSUER` |
+| Служебное | `/health`, `/api/v1/health` | проверка живости: `{status: "healthy", version}` |
 
 Ошибки возвращаются единым форматом `{error_code, message, detail}`; коды: 400 — валидация, 401 — нет токена, 403 — чужая роль или ресурс, 404 — нет объекта, 409 — конфликт состояния, 422 — ошибка схемы, 429 — превышен лимит.
 
@@ -117,7 +138,7 @@ erDiagram
 | Разграничение прав по ролям | Зависимости `require_candidate` и `require_employer`; кандидат видит только свои записи, работодатель — только свою компанию |
 | Защита контактов | Контакты и скрытое ФИО раскрываются только после принятия приглашения или отклика |
 | Хранение паролей и токенов | bcrypt; JWT access 30 минут и refresh 30 дней; секрет только из окружения, слабый секрет в production останавливает запуск |
-| Защита от перебора | Лимиты: регистрация 3 в минуту, вход 5 в минуту с адреса |
+| Защита от перебора | Лимиты: регистрация 3 в минуту, вход 5 в минуту, экспресс-тест 10 в минуту, начало и завершение входа через ФСП ID по 20 в минуту с адреса; Arena — запуск на примерах 20 и отправка решения 10 в минуту на пользователя |
 | Минимизация | Работодатель видит псевдоним «Кандидат #A1B2», пока кандидат не открыл имя в настройках приватности |
 | Исполнение чужого кода | Решения Arena запускаются отдельными процессами под Landlock и seccomp без сети и записи на диск, с лимитами процессора и памяти; JavaScript включается только при обоих слоях ядра. Состояние слоёв на стенде — `GET /api/v1/arena/sandbox` |
 
