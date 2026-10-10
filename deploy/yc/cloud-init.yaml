@@ -40,7 +40,10 @@ write_files:
       DOCS_ENABLED=true
       MAIL_FROM=HyreKit <noreply@hyrekit.ru>
       ENV
-      md hyrekit-extra-env | base64 -d >> .env 2>/dev/null || true
+      # Дополнительные переменные (GigaChat, SMTP) — base64 в метаданных; без ключа сервер метаданных отдаёт не base64
+      if EXTRA=$(md hyrekit-extra-env 2>/dev/null | base64 -d 2>/dev/null) && ! printf '%s\n' "$EXTRA" | grep -qvE '^([A-Za-z_][A-Za-z0-9_]*=.*|#.*|)$'; then
+        printf '%s\n' "$EXTRA" >> .env
+      fi
       docker login --username json_key --password-stdin cr.yandex < sa-key.json
       docker compose -f compose.prod.yaml --env-file .env pull
       docker compose -f compose.prod.yaml --env-file .env up -d --remove-orphans
