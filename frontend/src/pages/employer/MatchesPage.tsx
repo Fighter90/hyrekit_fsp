@@ -16,6 +16,7 @@ import InviteModal from '../../components/employer/InviteModal'
 import VacancyAssessmentView from '../../components/employer/VacancyAssessmentView'
 import Tabs from '../../components/ui/Tabs'
 import { errorMessage, formatSalary, gradeLabel, GRADE_ORDER, plural } from '../../lib/format'
+import { invitationPending } from '../../lib/candidate'
 
 const BREAKDOWN_LABEL: Record<keyof MatchBreakdown, string> = {
   category: 'Категория',
@@ -273,8 +274,8 @@ function MatchCard({ item, rank, vacancyStack, vacancyId, invitedStatus, onInvit
       actions={
         <>
           <LinkButton to={`/app/candidates/${item.candidate.id}`} variant="ghost" size="sm" icon={<UserRound size={14} />}>Профиль</LinkButton>
-          <Button size="sm" icon={<Send size={14} />} onClick={onInvite} disabled={!!status && status !== 'declined'}>
-            {status && status !== 'declined' ? 'Приглашён' : 'Пригласить'}
+          <Button size="sm" icon={<Send size={14} />} onClick={onInvite} disabled={invitationPending(status)}>
+            {invitationPending(status) ? 'Приглашён' : 'Пригласить'}
           </Button>
         </>
       }

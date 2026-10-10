@@ -13,6 +13,7 @@ import { SkeletonCard } from '../../components/ui/Skeleton'
 import CandidateCardView from '../../components/employer/CandidateCardView'
 import InviteModal from '../../components/employer/InviteModal'
 import { GRADE_ORDER, gradeLabel, plural } from '../../lib/format'
+import { invitationPending } from '../../lib/candidate'
 
 const PAGE = 12
 
@@ -108,8 +109,8 @@ export default function CandidatesPage() {
               actions={
                 <>
                   <LinkButton to={`/app/candidates/${c.id}`} variant="ghost" size="sm" icon={<UserRound size={14} />}>Профиль</LinkButton>
-                  <Button size="sm" icon={<Send size={14} />} onClick={() => setInviteFor(c)} disabled={!!c.invitation_status && c.invitation_status !== 'declined'}>
-                    {c.invitation_status && c.invitation_status !== 'declined' ? 'Приглашён' : 'Пригласить'}
+                  <Button size="sm" icon={<Send size={14} />} onClick={() => setInviteFor(c)} disabled={invitationPending(c.invitation_status)}>
+                    {invitationPending(c.invitation_status) ? 'Приглашён' : 'Пригласить'}
                   </Button>
                 </>
               }
