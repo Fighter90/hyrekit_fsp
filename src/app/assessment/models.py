@@ -35,3 +35,22 @@ class AssessmentAttempt(UUIDMixin, TimestampMixin, Base):
     assigned_grade: Mapped[str | None] = mapped_column(String(16))
     suggestion: Mapped[str | None] = mapped_column(String(16))
     by_topic: Mapped[list[dict[str, Any]] | None] = mapped_column(JSON)
+
+
+class ItemCalibration(UUIDMixin, TimestampMixin, Base):
+    """Статус семейства заданий по мониторингу утечек (FSP-33): последняя калибровка."""
+
+    __tablename__ = 'item_calibration'
+
+    family: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    topic: Mapped[str] = mapped_column(String(32))
+    shows: Mapped[int] = mapped_column(Integer, default=0)
+    correct: Mapped[int] = mapped_column(Integer, default=0)
+    solve_rate: Mapped[float] = mapped_column(Float, default=0.0)
+    expected_rate: Mapped[float] = mapped_column(Float, default=0.0)
+    drift: Mapped[float] = mapped_column(Float, default=0.0)
+    z: Mapped[float] = mapped_column(Float, default=0.0)
+    offset: Mapped[float] = mapped_column(Float, default=0.0)  # сдвиг трудности, логиты
+    status: Mapped[str] = mapped_column(String(8), default='few')  # ok | leak | hard | few
+    excluded: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    calibrated_at: Mapped[datetime] = mapped_column(DateTime)
