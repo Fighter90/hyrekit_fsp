@@ -1,0 +1,97 @@
+# ============================================
+# HyreKit — Docker Compose
+# ============================================
+# Запуск:    docker compose up -d --build
+# Остановка: docker compose down
+# Логи:      docker compose logs -f app
+
+services:
+  # --- Backend: FastAPI ---
+  app:
+    build:
+      context: .
+      target: production
+    container_name: hyrekit-app
+    ports:
+      - "127.0.0.1:8000:8000"
+    env_file: .env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://hyrekit:${POSTGRES_PASSWORD:-devpassword}@db:5432/hyrekit
+      - REDIS_URL=redis://redis:6379/0
+      - UPLOAD_DIR=/data/uploads
+      - SMTP_HOST=${SMTP_HOST:-mailpit}
+      - SMTP_PORT=${SMTP_PORT:-1025}
+    volumes:
+      - upload_data:/data/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # --- PostgreSQL 16 ---
+  db:
+    image: postgres:16-alpine
+    container_name: hyrekit-db
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      POSTGRES_DB: hyrekit
+      POSTGRES_USER: hyrekit
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpassword}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hyrekit -d hyrekit"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # --- Redis 7 (rate limiting) ---
+  redis:
+    image: redis:7-alpine
+    container_name: hyrekit-redis
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # --- Mailpit: перехват писем подтверждения, веб-интерфейс http://localhost:8025 ---
+  mailpit:
+    image: axllent/mailpit:v1.21
+    container_name: hyrekit-mailpit
+    ports:
+      - "127.0.0.1:8025:8025"
+    restart: unless-stopped
+
+  # --- Frontend: React SPA (nginx) ---
+  frontend:
+    build:
+      context: ./frontend
+      target: production
+    container_name: hyrekit-frontend
+    ports:
+      - "127.0.0.1:3000:80"
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  upload_data:

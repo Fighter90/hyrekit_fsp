@@ -1,0 +1,22 @@
+# Только инфраструктура для локальной разработки (backend и frontend запускаются вне Docker)
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: hyrekit-db
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      POSTGRES_DB: hyrekit
+      POSTGRES_USER: hyrekit
+      POSTGRES_PASSWORD: devpassword
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hyrekit -d hyrekit"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: hyrekit-redis
+    ports:
+      - "127.0.0.1:6379:6379"

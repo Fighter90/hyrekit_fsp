@@ -1,0 +1,45 @@
+# =============================================================================
+# HyreKit — Production Dependencies
+# =============================================================================
+
+# --- Web Framework ---
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+
+# --- Validation ---
+pydantic==2.10.5
+pydantic-settings==2.7.1
+email-validator==2.2.0
+
+# --- Database ---
+sqlalchemy[asyncio]==2.0.37
+asyncpg==0.30.0
+alembic==1.14.1
+
+redis==5.2.1
+
+# --- Auth ---
+PyJWT==2.10.1
+bcrypt==4.2.1
+
+# --- Encryption ---
+cryptography>=42.0
+
+# --- HTTP Client ---
+httpx==0.28.1
+tenacity==9.0.0
+
+# --- Rate Limiting ---
+slowapi==0.1.9
+
+# --- Document Parsing / Export ---
+PyMuPDF==1.25.3
+python-docx==1.1.2
+reportlab==5.0.1
+
+# --- AI/ML ---
+gigachat==0.1.40
+
+# --- Logging ---
+structlog==24.4.0

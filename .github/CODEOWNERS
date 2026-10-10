@@ -1,0 +1,21 @@
+# =============================================================================
+# CODEOWNERS — автоматическое назначение ревьюеров
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# =============================================================================
+
+# Глобальный владелец — все файлы
+*                       @Fighter90
+
+# Безопасность и CI/CD — обязательный ревью
+.github/                @Fighter90
+.github/workflows/      @Fighter90
+Dockerfile*             @Fighter90
+docker-compose*.yml     @Fighter90
+
+# Конфигурация и зависимости
+pyproject.toml          @Fighter90
+requirements*.txt       @Fighter90
+alembic/                @Fighter90
+
+# Документация
+*.md                    @Fighter90

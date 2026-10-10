@@ -1,0 +1,9 @@
+title = "HyreKit gitleaks config"
+
+[allowlist]
+  description = "Примеры значений в документации и шаблонах"
+  paths = [
+    '''\.env\.example''',
+    '''docs/.*\.md''',
+    '''node_modules/''',
+  ]

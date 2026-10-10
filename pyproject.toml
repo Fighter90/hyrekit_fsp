@@ -1,0 +1,133 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "hyrekit"
+version = "0.1.0"
+description = "HyreKit — платформа подбора ИТ-специалистов с верифицированным профилем участника ФСП"
+readme = "README.md"
+license = {text = "GPL-3.0"}
+requires-python = ">=3.11"
+authors = [
+    {name = "HyreKit Team"},
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# =============================================================================
+# Ruff — линтер и форматтер
+# =============================================================================
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",     # pycodestyle
+    "F",           # pyflakes
+    "I",           # isort
+    "N",           # pep8-naming
+    "UP",          # pyupgrade
+    "S",           # bandit (security)
+    "B",           # bugbear
+    "A",           # builtins shadowing
+    "C4",          # comprehensions
+    "DTZ",         # datetime timezone
+    "T20",         # print statements
+    "SIM",         # simplify
+    "TCH",         # type-checking imports
+    "RUF",         # ruff-specific
+    "ASYNC",       # async best practices
+    "PT",          # pytest style
+]
+ignore = [
+    "S101",   # assert в тестах допустим
+    "B008",   # Depends() в аргументах — стандартный паттерн FastAPI
+    "RUF001", # Кириллица в строках — русскоязычный проект
+    "RUF002", # Кириллица в docstrings — русскоязычный проект
+    "RUF003", # Кириллица в комментариях — русскоязычный проект
+    "TC001", # TYPE_CHECKING imports (app) — не критично для runtime
+    "TC002", # TYPE_CHECKING imports (third-party) — не критично для runtime
+    "TC003", # TYPE_CHECKING imports (stdlib) — не критично для runtime
+    "N818",  # Exception suффикс Error — осознанное именование (ResumeNotFound и т.д.)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S", "DTZ"]
+# Генерация вариантов заданий и демо-данных детерминирована по зерну — не криптография
+"src/app/assessment/**" = ["S311", "E501"]
+"src/app/fsp/**" = ["S311"]
+"src/app/core/seed.py" = ["S311"]
+"scripts/**" = ["S311", "T20"]
+"alembic/**" = ["E501"]
+
+[tool.ruff.format]
+quote-style = "single"
+
+# =============================================================================
+# mypy — проверка типов
+# =============================================================================
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_any_generics = true
+check_untyped_defs = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = [
+    "gigachat.*",
+    "pymupdf.*",
+    "fitz.*",
+    "docx.*",
+    "pytesseract.*",
+    "PIL.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["app.export.service"]
+disable_error_code = ["valid-type", "attr-defined"]
+
+# =============================================================================
+# pytest
+# =============================================================================
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+addopts = [
+    "--strict-markers",
+    "--tb=short",
+    "-q",
+]
+markers = [
+    "slow: slow tests (LLM calls, etc.)",
+    "integration: integration tests requiring DB/Redis",
+]
+
+[tool.coverage.run]
+source = ["src/app"]
+omit = ["*/migrations/*", "*/alembic/*"]
+concurrency = ["greenlet", "thread"]
+
+[tool.coverage.report]
+fail_under = 70
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "if __name__ ==",
+    "pass",
+    "\\.\\.\\.",
+]
