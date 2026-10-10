@@ -22,3 +22,4 @@
 | [Валидация](fsp-54-55-validaciya.md) | FSP-54, FSP-55 |
 | [Сквозной браузерный тест](fsp-56-e2e.md) | FSP-56 |
 | [Интеграция с LLM: GigaChat, YandexGPT и правила](llm-provajdery.md) | FSP-22, FSP-36, FSP-51 |
+| [Питч и инструкция для жюри](fsp-58-pitch.md) | FSP-58 |
