@@ -1,5 +1,5 @@
 #cloud-config
-# Первичная настройка ВМ площадки. Подставляет deploy.sh: __COMPOSE_B64__, __CADDY_B64__, __SA_KEY_B64__.
+# Первичная настройка ВМ площадки. Подставляет deploy.sh: __COMPOSE_B64__, __CADDY_B64__, __SA_KEY_B64__, __REGISTRY__, __TAG__.
 package_update: true
 packages: [docker.io, docker-compose-v2, jq, curl]
 write_files:
@@ -21,7 +21,11 @@ write_files:
       set -euo pipefail
       cd /opt/hyrekit
       md() { curl -sf -H 'Metadata-Flavor: Google' "http://169.254.169.254/computeMetadata/v1/instance/attributes/$1"; }
-      TAG=$(md hyrekit-tag); REGISTRY=$(md hyrekit-registry)
+      # Тег и реестр из метаданных (обновление без пересоздания ВМ); если ответ не похож на значение — версия, вшитая при создании
+      TAG=$(md hyrekit-tag 2>/dev/null || true); REGISTRY=$(md hyrekit-registry 2>/dev/null || true)
+      [[ "$TAG" =~ ^[A-Za-z0-9._-]{1,128}$ ]] || TAG=__TAG__
+      [[ "$REGISTRY" =~ ^cr\.yandex/[a-z0-9]+$ ]] || REGISTRY=__REGISTRY__
+      echo "hyrekit-up: REGISTRY=$REGISTRY TAG=$TAG"
       if [ ! -f secrets.env ]; then
         printf 'POSTGRES_PASSWORD=%s\nSECRET_KEY=%s\n' "$(openssl rand -hex 16)" "$(openssl rand -hex 32)" > secrets.env
         chmod 600 secrets.env
