@@ -9,6 +9,7 @@
 | Репозиторий | <https://github.com/Fighter90/hyrekit_fsp> |
 | Сопроводительная документация | [docs/guide/README.md](docs/guide/README.md), одним файлом — [docx](docs/HyreKit_Documentation.docx) и [pdf](docs/HyreKit_Documentation.pdf) |
 | Инструкция для жюри | [docs/jury.md](docs/jury.md) — стенд, демо-аккаунты, экспресс-тест за 5 минут, что посмотреть работодателем |
+| Демо-видео (3 минуты, титры) | [HyreKit_demo.mp4](docs/presentation/HyreKit_demo.mp4): тест, автопроверка, Code Arena, разбор модели, подборка и приглашение |
 | Презентация (питч на 10 минут, шаблон ФСП) | [pptx](docs/presentation/HyreKit_pitch.pptx) и [pdf](docs/presentation/HyreKit_pitch.pdf), 23 слайда, заметки докладчика в pptx |
 
 Платформа-агрегатор ИТ-вакансий с верифицированным профилем достижений участника ФСП. Хакатон Федерации спортивного программирования 2026, команда «Команда 1».
@@ -330,7 +331,7 @@ flowchart TB
 │   ├── decisions/      # ADR
 │   ├── spec/api.md     # контракт API
 │   ├── validation/     # результаты валидации методики
-│   ├── presentation/   # питч pptx и pdf на шаблоне ФСП, скриншоты стенда, скрипты сборки
+│   ├── presentation/   # питч pptx и pdf на шаблоне ФСП, демо-видео, скриншоты стенда, скрипты сборки
 │   ├── jury.md         # инструкция для жюри
 │   └── assets/         # логотип, скриншоты
 ├── PRODUCT.md CONTEXT.md DESIGN.md AGENTS.md CHANGELOG.md
@@ -405,7 +406,7 @@ ESLint (`npm run lint`) в CI не входит и запускается лок
 | [docs/guide/](docs/guide/README.md) | Сопроводительная документация для жюри: продукт, сценарий, методика, архитектура, запуск, технологии, команда |
 | [HyreKit_Documentation.docx](docs/HyreKit_Documentation.docx), [.pdf](docs/HyreKit_Documentation.pdf) | Те же разделы одним файлом, сборка — `python scripts/build_docs.py` |
 | [docs/jury.md](docs/jury.md) | Инструкция для жюри: стенд, демо-аккаунты, экспресс-тест, сценарий работодателя |
-| [docs/presentation/](docs/presentation/HyreKit_pitch.pdf) | Питч на 10 минут: [pptx](docs/presentation/HyreKit_pitch.pptx) с заметками докладчика и [pdf](docs/presentation/HyreKit_pitch.pdf); скриншоты стенда — `docs/presentation/assets/`, сборка — `docs/presentation/source/` |
+| [docs/presentation/](docs/presentation/HyreKit_pitch.pdf) | Питч на 10 минут и [демо-видео](docs/presentation/HyreKit_demo.mp4): [pptx](docs/presentation/HyreKit_pitch.pptx) с заметками докладчика и [pdf](docs/presentation/HyreKit_pitch.pdf); скриншоты стенда — `docs/presentation/assets/`, сборка — `docs/presentation/source/` |
 | [docs/openapi.json](docs/openapi.json) | Спецификация OpenAPI, выгрузка — `PYTHONPATH=src python scripts/export_openapi.py` |
 | [docs/specs/](docs/specs/README.md) | Спецификации задач |
 | [docs/spec/api.md](docs/spec/api.md) | Контракт API |
