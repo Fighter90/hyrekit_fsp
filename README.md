@@ -405,7 +405,7 @@ ESLint (`npm run lint`) в CI не входит и запускается лок
 | [docs/guide/](docs/guide/README.md) | Сопроводительная документация для жюри: продукт, сценарий, методика, архитектура, запуск, технологии, команда |
 | [HyreKit_Documentation.docx](docs/HyreKit_Documentation.docx), [.pdf](docs/HyreKit_Documentation.pdf) | Те же разделы одним файлом, сборка — `python scripts/build_docs.py` |
 | [docs/jury.md](docs/jury.md) | Инструкция для жюри: стенд, демо-аккаунты, экспресс-тест, сценарий работодателя |
-| [docs/presentation/](docs/presentation/HyreKit_pitch.pdf) | Питч на 10 минут: [pptx](docs/presentation/HyreKit_pitch.pptx) с заметками докладчика и [pdf](docs/presentation/HyreKit_pitch.pdf); скриншоты стенда — `docs/presentation/assets/`, сборка — `docs/presentation/build/` |
+| [docs/presentation/](docs/presentation/HyreKit_pitch.pdf) | Питч на 10 минут: [pptx](docs/presentation/HyreKit_pitch.pptx) с заметками докладчика и [pdf](docs/presentation/HyreKit_pitch.pdf); скриншоты стенда — `docs/presentation/assets/`, сборка — `docs/presentation/source/` |
 | [docs/openapi.json](docs/openapi.json) | Спецификация OpenAPI, выгрузка — `PYTHONPATH=src python scripts/export_openapi.py` |
 | [docs/specs/](docs/specs/README.md) | Спецификации задач |
 | [docs/spec/api.md](docs/spec/api.md) | Контракт API |
