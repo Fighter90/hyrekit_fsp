@@ -1,4 +1,18 @@
 import type {
+  ArenaBoard,
+  ArenaCandidate,
+  ArenaEditorialItem,
+  ArenaLanguage,
+  ArenaMe,
+  ArenaParticipation,
+  ArenaProblemRef,
+  ArenaRound,
+  ArenaRoundDetail,
+  ArenaRoundInput,
+  ArenaRunResult,
+  ArenaSandbox,
+  ArenaSubmission,
+  ArenaTopItem,
   GuestInput,
   Application,
   ApplicationStatus,
@@ -396,6 +410,97 @@ export class ApiClient {
   /** /health живёт вне /api/v1. */
   health() {
     return fetch('/health').then((r) => r.json() as Promise<{ status: string }>)
+  }
+
+  // ── Code Arena ──
+  getArenaSandbox() {
+    return this.request<ArenaSandbox>('GET', '/arena/sandbox')
+  }
+  getArenaProblems() {
+    return this.request<ArenaProblemRef[]>('GET', '/arena/problems')
+  }
+  getArenaRounds() {
+    return this.request<ArenaRound[]>('GET', '/arena/rounds')
+  }
+  getArenaRound(id: string) {
+    return this.request<ArenaRoundDetail>('GET', `/arena/rounds/${id}`)
+  }
+  joinArenaRound(id: string) {
+    return this.request<ArenaParticipation>('POST', `/arena/rounds/${id}/join`)
+  }
+  runArena(id: string, problem: string, language: ArenaLanguage, code: string) {
+    return this.request<ArenaRunResult>('POST', `/arena/rounds/${id}/run`, { body: { problem, language, code } })
+  }
+  submitArena(id: string, problem: string, language: ArenaLanguage, code: string, signals: Record<string, number>) {
+    return this.request<{ submission: ArenaSubmission; participation: ArenaParticipation }>('POST', `/arena/rounds/${id}/submit`, {
+      body: { problem, language, code, signals },
+    })
+  }
+  finishArena(id: string) {
+    return this.request<ArenaParticipation>('POST', `/arena/rounds/${id}/finish`)
+  }
+  getArenaBoard(id: string) {
+    return this.request<ArenaBoard>('GET', `/arena/rounds/${id}/leaderboard`)
+  }
+  getArenaEditorial(id: string) {
+    return this.request<{ round_id: string; problems: ArenaEditorialItem[] }>('GET', `/arena/rounds/${id}/editorial`)
+  }
+  getArenaMe() {
+    return this.request<ArenaMe>('GET', '/arena/me')
+  }
+  setArenaSettings(show_arena: boolean) {
+    return this.request<{ show_arena: boolean; display_name: string }>('PUT', '/arena/me/settings', { body: { show_arena } })
+  }
+  createArenaRound(data: ArenaRoundInput) {
+    return this.request<ArenaRound>('POST', '/arena/rounds', { body: data })
+  }
+  getArenaTop(params: { specialization?: string; grade?: string; has_fsp?: boolean; min_rating?: number } = {}) {
+    return this.request<{ total: number; items: ArenaTopItem[] }>('GET', `/arena/top${buildQuery(params)}`)
+  }
+  getArenaCandidate(profileId: string) {
+    return this.request<ArenaCandidate>('GET', `/arena/candidates/${profileId}`)
+  }
+
+  /**
+   * Поток изменений таблицы (SSE через fetch: EventSource не умеет заголовок Authorization).
+   * Возвращает функцию остановки. При обрыве переподключается.
+   */
+  watchArenaBoard(id: string, onChange: (version: string) => void): () => void {
+    const ctrl = new AbortController()
+    const loop = async () => {
+      while (!ctrl.signal.aborted) {
+        try {
+          const res = await fetch(this.url(`/arena/rounds/${id}/stream`), { headers: this.headers(false), signal: ctrl.signal })
+          if (!res.ok || !res.body) throw new Error(String(res.status))
+          const reader = res.body.getReader()
+          const dec = new TextDecoder()
+          let buf = ''
+          for (;;) {
+            const { value, done } = await reader.read()
+            if (done) break
+            buf += dec.decode(value, { stream: true })
+            let idx
+            while ((idx = buf.indexOf('\n\n')) >= 0) {
+              const chunk = buf.slice(0, idx)
+              buf = buf.slice(idx + 2)
+              const data = chunk.split('\n').find((l) => l.startsWith('data: '))
+              if (data) {
+                try {
+                  onChange((JSON.parse(data.slice(6)) as { version: string }).version)
+                } catch {
+                  /* пропускаем битое событие */
+                }
+              }
+            }
+          }
+        } catch {
+          if (ctrl.signal.aborted) return
+        }
+        await new Promise((r) => setTimeout(r, 3000))
+      }
+    }
+    void loop()
+    return () => ctrl.abort()
   }
 }
 

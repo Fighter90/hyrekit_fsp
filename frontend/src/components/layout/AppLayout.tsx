@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard, UserRound, ClipboardCheck, Mail, Briefcase, Trophy, Settings, LogOut, Menu, X,
+  LayoutDashboard, UserRound, ClipboardCheck, Mail, Briefcase, Trophy, Code2, Settings, LogOut, Menu, X,
   Building2, Users, Send, Search, Bookmark,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -24,6 +24,7 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { to: '/app/assessment', label: 'Тестирование', icon: ClipboardCheck },
     { to: '/app/invitations', label: 'Приглашения', icon: Mail },
     { to: '/app/vacancies', label: 'Вакансии', icon: Briefcase },
+    { to: '/app/arena', label: 'Code Arena', icon: Code2 },
     { to: '/app/challenges', label: 'Челленджи', icon: Trophy },
     { to: '/app/settings', label: 'Настройки', icon: Settings },
   ],
@@ -34,6 +35,7 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
     { to: '/app/candidates', label: 'Банк кандидатов', icon: Search },
     { to: '/app/favorites', label: 'Избранное', icon: Bookmark },
     { to: '/app/invitations', label: 'Приглашения и отклики', icon: Send },
+    { to: '/app/arena', label: 'Code Arena', icon: Code2 },
     { to: '/app/challenges', label: 'Челленджи', icon: Trophy },
     { to: '/app/settings', label: 'Настройки', icon: Settings },
   ],
