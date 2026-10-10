@@ -59,16 +59,25 @@ export function formatSalary(from: number | null | undefined, to: number | null 
   return 'не указана'
 }
 
+/**
+ * Дата из ответа API. Бэкенд хранит время в UTC без пояса («2026-10-10T18:55:47»),
+ * а `new Date()` читает такую строку как местное время. Без пояса считаем UTC.
+ */
+export function parseServerDate(iso: string): Date {
+  const utc = /T\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(iso) ? `${iso}Z` : iso
+  return new Date(utc)
+}
+
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return '—'
-  const d = new Date(iso)
+  const d = parseServerDate(iso)
   if (Number.isNaN(d.getTime())) return '—'
   return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
 export function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return '—'
-  const d = new Date(iso)
+  const d = parseServerDate(iso)
   if (Number.isNaN(d.getTime())) return '—'
   return d.toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 }

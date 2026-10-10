@@ -21,6 +21,9 @@ export default function ResultView({ result: r, specTitle, allowedGrades, onStar
   const target =
     r.suggestion === 'retry_lower' ? neighbourGrade(r.grade_tested, -1) : r.suggestion === 'try_higher' ? neighbourGrade(r.grade_tested, 1) : null
   const canStart = target !== null && allowedGrades.includes(target)
+  // Тест не сдан на младшем грейде: сервер оставляет suggestion = keep, но «категория подтверждена» здесь неверно
+  const failedKeep = !r.passed && r.suggestion === 'keep'
+  const tone = failedKeep ? 'retry_lower' : r.suggestion
 
   return (
     <div className="result">
@@ -35,17 +38,25 @@ export default function ResultView({ result: r, specTitle, allowedGrades, onStar
           <div className="result__cat">
             {r.assigned_grade ? (
               <>
-                <CheckCircle2 size={18} className="text-success" />
-                <span>Присвоена категория</span>
+                {r.passed && <CheckCircle2 size={18} className="text-success" />}
+                <span>{r.passed ? 'Присвоена категория' : 'Остаётся категория прошлого теста'}</span>
                 <CategoryBadge title={`${specTitle} · ${gradeLabel(r.assigned_grade)}`} grade={r.assigned_grade} />
               </>
             ) : (
               <span className="muted">Категория не присвоена</span>
             )}
           </div>
-          <div className={`suggestion suggestion--${r.suggestion}`}>
-            {r.suggestion === 'retry_lower' ? <ArrowDown size={18} /> : r.suggestion === 'try_higher' ? <ArrowUp size={18} /> : <CheckCircle2 size={18} />}
-            <span>{SUGGESTION_LABEL[r.suggestion]}</span>
+          <div className={`suggestion suggestion--${tone}`}>
+            {failedKeep ? (
+              <RotateCcw size={18} />
+            ) : r.suggestion === 'retry_lower' ? (
+              <ArrowDown size={18} />
+            ) : r.suggestion === 'try_higher' ? (
+              <ArrowUp size={18} />
+            ) : (
+              <CheckCircle2 size={18} />
+            )}
+            <span>{failedKeep ? 'Верных ответов меньше большинства — разберите темы ниже и попробуйте снова' : SUGGESTION_LABEL[r.suggestion]}</span>
           </div>
           <div className="row wrap gap-sm mt">
             {target && (

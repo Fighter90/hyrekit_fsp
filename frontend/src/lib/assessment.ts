@@ -1,5 +1,5 @@
 import type { AnswerValue, AttemptItem, Grade, VacancyAssessment } from '../api/types'
-import { GRADE_ORDER } from './format'
+import { GRADE_ORDER, parseServerDate } from './format'
 
 /*
  * Чистая логика прохождения теста — вынесена из компонента для тестируемости.
@@ -59,7 +59,7 @@ export function nextUnanswered(items: AttemptItem[], answers: Record<string, Ans
 }
 
 export function msLeft(deadlineIso: string, now: number = Date.now()): number {
-  const t = new Date(deadlineIso).getTime()
+  const t = parseServerDate(deadlineIso).getTime()
   if (Number.isNaN(t)) return 0
   return Math.max(0, t - now)
 }

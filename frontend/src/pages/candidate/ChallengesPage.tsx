@@ -10,7 +10,7 @@ import { Button } from '../../components/ui/Button'
 import { EmptyState, ErrorState } from '../../components/ui/States'
 import { SkeletonList } from '../../components/ui/Skeleton'
 import Reveal from '../../components/ui/Reveal'
-import { errorMessage, formatDate } from '../../lib/format'
+import { errorMessage, formatDate, parseServerDate } from '../../lib/format'
 
 export default function CandidateChallengesPage() {
   const { data, error, loading, reload, setData } = useAsync(() => api.getCandidateChallenges())
@@ -44,7 +44,7 @@ function ChallengeCard({ challenge: c, submission, onSubmitted }: { challenge: C
   const [open, setOpen] = useState(false)
   const [answer, setAnswer] = useState('')
   const [busy, setBusy] = useState(false)
-  const overdue = c.due_at ? new Date(c.due_at).getTime() < Date.now() : false
+  const overdue = c.due_at ? parseServerDate(c.due_at).getTime() < Date.now() : false
 
   const submit = async () => {
     if (!answer.trim()) return
