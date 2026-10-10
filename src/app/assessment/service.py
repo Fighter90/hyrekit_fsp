@@ -22,6 +22,7 @@ def eligibility(profile: CandidateProfile) -> dict[str, Any]:
 
     Пока грейд не подтверждён, доступен любой (после провала — сразу ниже).
     После подтверждения смена грейда возможна не чаще раза в 90 дней.
+    Гость экспресс-теста сдаёт любой грейд без кулдауна.
     """
     base = {'declared_grade': profile.declared_grade, 'current_grade': profile.grade}
     if not profile.specialization:
@@ -31,7 +32,7 @@ def eligibility(profile: CandidateProfile) -> dict[str, Any]:
             'locked_until': None,
             'reason': 'Сначала пройдите опрос: отрасль, специализация, грейд',
         }
-    if profile.grade is None:
+    if profile.grade is None or profile.is_guest:
         return {**base, 'allowed_grades': list(GRADE_CODES), 'locked_until': None, 'reason': None}
     unlock = next_grade_change_at(profile)
     if unlock and unlock > utcnow():
@@ -53,6 +54,7 @@ def view(attempt: AssessmentAttempt) -> dict[str, Any]:
     return {
         'id': attempt.id,
         'grade': attempt.grade,
+        'mode': attempt.mode,
         'specialization': attempt.specialization,
         'started_at': attempt.started_at,
         'deadline_at': attempt.deadline_at,
@@ -65,6 +67,7 @@ def result(attempt: AssessmentAttempt) -> dict[str, Any]:
     return {
         'id': attempt.id,
         'grade_tested': attempt.grade,
+        'mode': attempt.mode,
         'specialization': attempt.specialization,
         'score': attempt.score,
         'ability': attempt.ability,
@@ -98,16 +101,24 @@ async def start(session: AsyncSession, profile: CandidateProfile, grade: str) ->
         return current  # продолжение незавершённой попытки
     if current:
         await finish(session, profile, current)  # просроченная или другой грейд — закрываем
-    plan = engine.build_blueprint(profile.specialization, grade)  # type: ignore[arg-type]
+    # Гость сдаёт экспресс-тест (FSP-32), обычный кандидат — полный.
+    express = profile.is_guest
+    plan = engine.build_blueprint(
+        profile.specialization,  # type: ignore[arg-type]
+        grade,
+        items_per_topic=engine.EXPRESS_ITEMS_PER_TOPIC if express else engine.ITEMS_PER_TOPIC,
+    )
+    seconds = engine.EXPRESS_SECONDS_PER_ITEM if express else engine.SECONDS_PER_ITEM
     now = utcnow()
     attempt = AssessmentAttempt(
         profile_id=profile.id,
         specialization=profile.specialization,
         grade=grade,
+        mode='express' if express else 'full',
         plan=[p.__dict__ for p in plan],
         answers={},
         started_at=now,
-        deadline_at=now + timedelta(seconds=engine.SECONDS_PER_ITEM * len(plan)),
+        deadline_at=now + timedelta(seconds=seconds * len(plan)),
     )
     session.add(attempt)
     await session.flush()

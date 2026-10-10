@@ -159,6 +159,7 @@ def to_out(profile: CandidateProfile) -> dict[str, Any]:
         'privacy': {**DEFAULT_PRIVACY, **(profile.privacy or {})},
         'consent_given_at': profile.consent_given_at,
         'is_visible': is_visible(profile),
+        'is_guest': bool(profile.is_guest),
         'completeness': completeness(profile),
         'created_at': profile.created_at,
         'updated_at': profile.updated_at,
@@ -215,3 +216,51 @@ def to_card(
 
 def touch(profile: CandidateProfile) -> None:
     profile.last_activity_at = utcnow()
+
+
+# ── Гость экспресс-теста для жюри (FSP-32) ───────────────────────────────────
+GUEST_EMAIL_DOMAIN = 'guest.hyrekit.ru'
+GUEST_INDUSTRY = 'it_services'
+GUEST_EXPERIENCE_YEARS = {'intern': 0.0, 'junior': 1.0, 'middle': 3.0, 'senior': 5.0, 'lead': 8.0}
+
+
+async def create_guest(session: AsyncSession, *, specialization: str, grade: str) -> User:
+    """Отдельный подтверждённый кандидат на каждый запуск: эксперты не мешают друг другу."""
+    import secrets
+
+    from app.auth.models import UserRole
+    from app.catalog.data import SPEC_BY_CODE
+    from app.core.security import hash_password
+
+    tag = secrets.token_hex(6)
+    spec = SPEC_BY_CODE[specialization]
+    user = User(
+        email=f'guest-{tag}@{GUEST_EMAIL_DOMAIN}',
+        hashed_password=hash_password(secrets.token_urlsafe(24)),
+        full_name=f'Гость жюри {tag[:4].upper()}',
+        role=UserRole.CANDIDATE,
+        is_verified=True,
+    )
+    session.add(user)
+    await session.flush()
+    now = utcnow()
+    session.add(
+        CandidateProfile(
+            user_id=user.id,
+            full_name=user.full_name,
+            headline=f'{spec["title"]} · экспресс-тест жюри',
+            industry=GUEST_INDUSTRY,
+            specialization=specialization,
+            declared_grade=grade,
+            experience_years=GUEST_EXPERIENCE_YEARS[grade],
+            stack=list(spec['stack_hints'][:4]),
+            roles=[],
+            soft_skills=[],
+            privacy=dict(DEFAULT_PRIVACY),
+            consent_given_at=now,
+            last_activity_at=now,
+            is_guest=True,
+        )
+    )
+    await session.flush()
+    return user

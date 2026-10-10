@@ -54,6 +54,7 @@ class Settings(BaseSettings):
 
     # --- Демо и публичный адрес ---
     seed_demo: bool = True  # демо-аккаунты и синтетический банк кандидатов при старте
+    guest_mode: bool = True  # экспресс-тест для жюри без регистрации (FSP-32)
     public_url: str = 'http://localhost:3000'  # адрес фронтенда для ссылок в письмах
     docs_enabled: bool = True  # Swagger UI и /openapi.json (ТЗ 3.5: API описан через OpenAPI)
 

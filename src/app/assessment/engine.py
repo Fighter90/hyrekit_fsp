@@ -25,6 +25,8 @@ from app.catalog.data import GRADE_CODES, GRADE_ORDER, SPEC_BY_CODE
 
 ITEMS_PER_TOPIC = 2
 SECONDS_PER_ITEM = 120
+EXPRESS_ITEMS_PER_TOPIC = 1  # экспресс-тест для жюри: 5 тем × 1 задание
+EXPRESS_SECONDS_PER_ITEM = 60
 UPGRADE_MARGIN = 0.35  # запас по θ над порогом следующего грейда
 MAX_CONCEPTUAL = 1  # не больше одного концептуального задания в попытке (см. bank.CONCEPTUAL)
 CONCEPTUAL_WEIGHT = 1.0  # вес концептуального ответа в оценке θ
@@ -49,7 +51,12 @@ class PlannedItem:
 
 
 def build_blueprint(
-    specialization: str, grade: str, *, rng_seed: int | None = None, topics: list[str] | None = None
+    specialization: str,
+    grade: str,
+    *,
+    rng_seed: int | None = None,
+    topics: list[str] | None = None,
+    items_per_topic: int = ITEMS_PER_TOPIC,
 ) -> list[PlannedItem]:
     """Формирует план попытки: темы × уровни × случайные семейства и зёрна."""
     import random
@@ -61,7 +68,7 @@ def build_blueprint(
     conceptual_count = 0
     for t_index, topic in enumerate(spec_topics):
         neighbour = base + 1 if t_index % 2 == 0 else base - 1
-        levels = [base, max(1, min(5, neighbour)), base, max(1, min(5, base * 2 - neighbour))][:ITEMS_PER_TOPIC]
+        levels = [base, max(1, min(5, neighbour)), base, max(1, min(5, base * 2 - neighbour))][:items_per_topic]
         used: set[str] = set()
         for slot, level in enumerate(levels):
             # Только семейства, осмысленные на этом уровне, — сложность задания равна плановой.

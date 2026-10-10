@@ -25,6 +25,7 @@
 |---|---|---|
 | POST | `/auth/register` | `{email, password, full_name, role}` → `{access_token, refresh_token, token_type}` |
 | POST | `/auth/login` | `{email, password}` → токены |
+| POST | `/auth/guest` | `{specialization, grade, consent}` → токены гостевого кандидата экспресс-теста; 404 при `GUEST_MODE=false`, 10 запросов в минуту |
 | POST | `/auth/refresh` | `{refresh_token}` → токены |
 | GET | `/auth/verify/{token}` | подтверждение почты; ссылка из письма ведёт на страницу фронтенда `/verify/{token}` |
 | POST | `/auth/resend-verification` | повторная отправка письма |

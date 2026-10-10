@@ -14,4 +14,5 @@
 | [Вакансии, отклики, короткие задания](fsp-50-51-vakansii-i-zadaniya.md) | FSP-50, FSP-51 |
 | [Тест под вакансию](fsp-vacancy-test.md) | FSP-28, FSP-43 |
 | [Демо-данные](fsp-17-demo-dannye.md) | FSP-17 |
+| [Экспресс-тест для жюри](fsp-32-ekspress-test.md) | FSP-32 |
 | [Валидация](fsp-54-55-validaciya.md) | FSP-54, FSP-55 |

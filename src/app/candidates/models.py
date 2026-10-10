@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import JSON, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base, TimestampMixin, UUIDMixin
@@ -60,6 +60,8 @@ class CandidateProfile(UUIDMixin, TimestampMixin, Base):
     fsp_snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSON)
     privacy: Mapped[dict[str, bool]] = mapped_column(JSON, default=lambda: dict(DEFAULT_PRIVACY))
     consent_given_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # Гость экспресс-теста для жюри (FSP-32): сдаёт только экспресс-тест, без кулдауна
+    is_guest: Mapped[bool] = mapped_column(Boolean, default=False, server_default='false')
 
     # Источник данных анкеты (форма / распознанное резюме)
     resume_text: Mapped[str | None] = mapped_column(Text)

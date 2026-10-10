@@ -1,4 +1,5 @@
 import type {
+  GuestInput,
   Application,
   ApplicationStatus,
   AttemptResult,
@@ -209,6 +210,10 @@ export class ApiClient {
 
   register(data: RegisterInput) {
     return this.request<RegisterResponse>('POST', '/auth/register', { body: data })
+  }
+  /** Экспресс-тест для жюри: гостевой кандидат без регистрации */
+  guest(data: GuestInput) {
+    return this.request<TokenPair>('POST', '/auth/guest', { body: data })
   }
   login(email: string, password: string) {
     return this.request<TokenPair>('POST', '/auth/login', { body: { email, password } })

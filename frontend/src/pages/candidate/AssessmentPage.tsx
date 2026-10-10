@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { Lock, Play, PencilLine, History, Timer, ListChecks, Shuffle, RotateCw } from 'lucide-react'
 import { api } from '../../api/client'
 import type { AnswerValue, AttemptResult, AttemptView, CandidateProfile, Eligibility, Grade, SurveyInput } from '../../api/types'
@@ -59,6 +60,9 @@ export default function AssessmentPage() {
   const [view, setView] = useState<View>({ kind: 'overview' })
   const [starting, setStarting] = useState<Grade | null>(null)
   const [snapshot, setSnapshot] = useState<AttemptView | null>(() => loadSnapshot())
+  const location = useLocation()
+  const navigate = useNavigate()
+  const autostarted = useRef(false)
 
   const start = async (grade: Grade) => {
     setStarting(grade)
@@ -75,6 +79,16 @@ export default function AssessmentPage() {
       setStarting(null)
     }
   }
+
+  // Экспресс-тест жюри: после гостевого входа тест стартует сразу (FSP-32)
+  const autostart = (location.state as { autostart?: Grade } | null)?.autostart
+  useEffect(() => {
+    if (!autostart || !data || autostarted.current) return
+    autostarted.current = true
+    navigate(location.pathname, { replace: true, state: null })
+    if (data.profile.is_guest) void start(autostart)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autostart, data])
 
   const onFinished = (result: AttemptResult) => {
     saveSnapshot(null)
@@ -116,6 +130,7 @@ export default function AssessmentPage() {
   return (
     <>
       <PageHeader title="Тестирование" subtitle="Опрос и тест подтверждают грейд и присваивают категорию." />
+      {data?.profile.is_guest && <ExpressNote />}
       {error && <ErrorState message={error} onRetry={reload} />}
       {loading && !data && <SkeletonCard lines={6} />}
       {data && view.kind === 'result' && (
@@ -149,6 +164,19 @@ export default function AssessmentPage() {
         </>
       )}
     </>
+  )
+}
+
+function ExpressNote() {
+  return (
+    <div className="alert alert--info">
+      <Timer size={18} />
+      <div className="grow small">
+        <strong>Демо-режим: экспресс-тест для жюри.</strong> 5 заданий за 5 минут вместо 10 за 20, тот же банк и та же
+        оценка. Грейд можно пересдавать без ожидания 90 дней. После теста войдите демо-работодателем
+        (employer@hyrekit.ru · HyreKit2026) — гостевой кандидат будет в подборке и поиске.
+      </div>
+    </div>
   )
 }
 

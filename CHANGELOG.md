@@ -2,6 +2,12 @@
 
 Формат — [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/), версии — [SemVer](https://semver.org/lang/ru/).
 
+## [Unreleased]
+
+### Добавлено
+- Экспресс-тест для жюри без регистрации: страница `/express`, `POST /api/v1/auth/guest`, 5 заданий за 5 минут, гость сразу попадает в подборку работодателя; переменная `GUEST_MODE` (FSP-32).
+- Миграция `0002_express_test`: `candidate_profiles.is_guest`, `assessment_attempts.mode`.
+
 ## [0.1.0] — 2026-10-10
 
 Первая версия к сдаче хакатона ФСП.

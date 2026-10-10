@@ -3,6 +3,7 @@ import {
   ArrowRight, UserRound, Building2, ClipboardCheck, BadgeCheck, Mail, Search, Wallet, Sparkles,
   ShieldCheck, Shuffle, Gauge, Eye, Trophy, Plus,
 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { LinkButton } from '../../components/ui/Button'
 import GlyphStrip from '../../components/ui/GlyphStrip'
 import Typing from '../../components/ui/Typing'
@@ -118,6 +119,9 @@ export default function LandingPage() {
                 Я работодатель
               </LinkButton>
             </div>
+            <p className="small hero__express">
+              Эксперт жюри? <Link to="/express">Экспресс-тест за 5 минут без регистрации</Link>
+            </p>
             <ul className="hero__bullets">
               <li><ShieldCheck size={16} /> Контакты скрыты до согласия</li>
               <li><Wallet size={16} /> Зарплата — в каждом приглашении</li>
