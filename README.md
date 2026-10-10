@@ -4,7 +4,7 @@
 
 | Что | Адрес |
 | --- | --- |
-| Прототип | <https://hyrekit.ru> — площадка в Yandex Cloud готовится к выкатке; до неё прототип поднимается локально одной командой ([Инструкция запуска](#инструкция-запуска)) |
+| Прототип | <https://hyrekit.ru> — стенд в Yandex Cloud; экспресс-тест без регистрации — <https://hyrekit.ru/express>. Локально прототип поднимается одной командой ([Инструкция запуска](#инструкция-запуска)) |
 | Описание API (Swagger) | <https://hyrekit.ru/docs>, локально — <http://localhost:8000/docs> |
 | Репозиторий | <https://github.com/Fighter90/hyrekit_fsp> |
 | Сопроводительная документация | [docs/guide/README.md](docs/guide/README.md), одним файлом — [docx](docs/HyreKit_Documentation.docx) и [pdf](docs/HyreKit_Documentation.pdf) |
