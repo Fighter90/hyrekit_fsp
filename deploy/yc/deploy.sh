@@ -3,6 +3,7 @@
 #
 #   YC_SA_KEY_JSON='{...}' TIMEWEB_TOKEN=... deploy/yc/deploy.sh          # первая выкатка или обновление
 #   SKIP_DNS=1 deploy/yc/deploy.sh                                       # без изменения DNS
+#   SKIP_BUILD=1 TAG=... deploy/yc/deploy.sh                             # образы с этим тегом уже в реестре
 #   SSH_PUBKEY=~/.ssh/id_ed25519.pub deploy/yc/deploy.sh                 # доступ по SSH для отладки (необязательно)
 #
 # Повторный запуск идемпотентен: существующие ресурсы переиспользуются, ВМ получает новый тег и перезапускается.
@@ -43,11 +44,13 @@ REGISTRY_ID=$(yc container registry get --name "$REGISTRY_NAME" --format json 2>
 REGISTRY=cr.yandex/$REGISTRY_ID
 yc iam create-token | docker login --username iam --password-stdin cr.yandex
 
-log "Сборка и публикация образов с тегом $TAG"
-docker build -t "$REGISTRY/hyrekit-app:$TAG" "$ROOT"
-docker build --target production -t "$REGISTRY/hyrekit-frontend:$TAG" "$ROOT/frontend"
-docker push "$REGISTRY/hyrekit-app:$TAG"
-docker push "$REGISTRY/hyrekit-frontend:$TAG"
+if [ -z "${SKIP_BUILD:-}" ]; then
+  log "Сборка и публикация образов с тегом $TAG"
+  docker build -t "$REGISTRY/hyrekit-app:$TAG" "$ROOT"
+  docker build --target production -t "$REGISTRY/hyrekit-frontend:$TAG" "$ROOT/frontend"
+  docker push "$REGISTRY/hyrekit-app:$TAG"
+  docker push "$REGISTRY/hyrekit-frontend:$TAG"
+fi
 
 # --- Сервисный аккаунт ВМ: только чтение реестра ---
 log 'Сервисный аккаунт ВМ'
