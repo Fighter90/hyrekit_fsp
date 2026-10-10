@@ -15,6 +15,7 @@ DOMAIN=${DOMAIN:-hyrekit.ru}
 VM=${VM:-hyrekit}
 REGISTRY_NAME=${REGISTRY_NAME:-hyrekit}
 SA_NAME=${SA_NAME:-hyrekit-vm}
+DISK_TYPE=${DISK_TYPE:-network-ssd}  # network-hdd, если квота на SSD исчерпана
 SSH_CIDR=${SSH_CIDR:-0.0.0.0/0}   # сузить до адресов команды
 TAG=${TAG:-$(git rev-parse --short HEAD)}
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -98,7 +99,7 @@ else
       "$HERE/cloud-init.yaml" > "$WORK/user-data.yaml"
   yc compute instance create --name "$VM" --hostname "$VM" \
     --platform standard-v3 --cores 2 --memory 4 --core-fraction 100 \
-    --create-boot-disk image-folder-id=standard-images,image-family=ubuntu-2404-lts,size=30,type=network-ssd \
+    --create-boot-disk image-folder-id=standard-images,image-family=ubuntu-2404-lts,size=30,type=$DISK_TYPE \
     --network-interface "subnet-id=$SUBNET_ID,nat-ip-version=ipv4,nat-address=$IP,security-group-ids=$SG_ID" \
     --metadata "hyrekit-tag=$TAG,hyrekit-registry=$REGISTRY" \
     --metadata-from-file "user-data=$WORK/user-data.yaml" \
