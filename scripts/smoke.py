@@ -99,7 +99,7 @@ def main() -> int:
     step('Тест выдан: 10 заданий', len(items) == 10, f'{len(items)}')
     step('Ответы не утекают во фронтенд', all('answer' not in it for it in items))
     for it in items:
-        ans = it['options'][0] if it.get('options') else '0'
+        ans = {'single': 0, 'multi': [0]}.get(it['kind'], '0')  # индекс варианта или число
         c.post(
             f'/api/v1/candidate/assessment/{view["id"]}/answer', headers=cand, json={'item_id': it['id'], 'answer': ans}
         )
@@ -128,7 +128,10 @@ def main() -> int:
     )
     scores = [i['score'] for i in top]
     step('Подборка по убыванию соответствия', scores == sorted(scores, reverse=True))
-    step('Контакты скрыты до согласия', all(i['candidate']['contacts'] is None for i in top))
+    step(
+        'Контакты открыты только после согласия кандидата',
+        all((i['candidate']['contacts'] is None) != i['candidate']['contacts_unlocked'] for i in top),
+    )
     prev = c.get(f'/api/v1/employer/vacancies/{vac["id"]}/assessment', headers=emp).json()
     variants = prev.get('variants', [])
     step('Тест под вакансию: два варианта', len(variants) == 2)
