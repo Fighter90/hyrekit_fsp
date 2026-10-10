@@ -1,5 +1,6 @@
 """Импорт всех ORM-моделей: нужен Alembic и create_all, чтобы метаданные были полными."""
 
+from app.arena.models import ArenaParticipant, ArenaRating, ArenaRound, ArenaSubmission
 from app.assessment.models import AssessmentAttempt
 from app.auth.models import User
 from app.candidates.models import CandidateProfile, ConsentEvent
@@ -9,6 +10,10 @@ from app.hiring.models import Application, Invitation
 
 __all__ = [
     'Application',
+    'ArenaParticipant',
+    'ArenaRating',
+    'ArenaRound',
+    'ArenaSubmission',
     'AssessmentAttempt',
     'CandidateProfile',
     'Challenge',

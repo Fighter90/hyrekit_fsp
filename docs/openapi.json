@@ -2566,6 +2566,838 @@
         }
       }
     },
+    "/api/v1/arena/sandbox": {
+      "get": {
+        "tags": [
+          "arena"
+        ],
+        "summary": "Слои песочницы и доступные языки",
+        "operationId": "sandbox_info_api_v1_arena_sandbox_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Sandbox Info Api V1 Arena Sandbox Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/arena/problems": {
+      "get": {
+        "tags": [
+          "arena"
+        ],
+        "summary": "Банк задач Arena",
+        "operationId": "problem_bank_api_v1_arena_problems_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response Problem Bank Api V1 Arena Problems Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/arena/rounds": {
+      "get": {
+        "tags": [
+          "arena"
+        ],
+        "summary": "Раунды: открытый, идущие, будущие и прошедшие",
+        "operationId": "list_rounds_api_v1_arena_rounds_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response List Rounds Api V1 Arena Rounds Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "arena"
+        ],
+        "summary": "Создать раунд работодателя",
+        "operationId": "create_round_api_v1_arena_rounds_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoundIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Create Round Api V1 Arena Rounds Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/arena/rounds/{round_id}": {
+      "get": {
+        "tags": [
+          "arena"
+        ],
+        "summary": "Раунд: задачи своего варианта и мои отправки",
+        "operationId": "get_round_api_v1_arena_rounds__round_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "round_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Round Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Get Round Api V1 Arena Rounds  Round Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/arena/rounds/{round_id}/leaderboard": {
+      "get": {
+        "tags": [
+          "arena"
+        ],
+        "summary": "Таблица раунда",
+        "operationId": "leaderboard_api_v1_arena_rounds__round_id__leaderboard_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "round_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Round Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Leaderboard Api V1 Arena Rounds  Round Id  Leaderboard Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/arena/rounds/{round_id}/stream": {
+      "get": {
+        "tags": [
+          "arena"
+        ],
+        "summary": "Изменения таблицы (Server-Sent Events)",
+        "operationId": "stream_api_v1_arena_rounds__round_id__stream_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "round_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Round Id"
+            }
+          },
+          {
+            "name": "once",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Отдать одно событие и закрыть поток (для проверки)",
+              "default": false,
+              "title": "Once"
+            },
+            "description": "Отдать одно событие и закрыть поток (для проверки)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/arena/rounds/{round_id}/editorial": {
+      "get": {
+        "tags": [
+          "arena"
+        ],
+        "summary": "Разбор задач: эталоны и статистика",
+        "operationId": "editorial_api_v1_arena_rounds__round_id__editorial_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "round_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Round Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Editorial Api V1 Arena Rounds  Round Id  Editorial Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/arena/rounds/{round_id}/join": {
+      "post": {
+        "tags": [
+          "arena"
+        ],
+        "summary": "Участвовать в раунде",
+        "operationId": "join_api_v1_arena_rounds__round_id__join_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "round_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Round Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Join Api V1 Arena Rounds  Round Id  Join Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/arena/rounds/{round_id}/run": {
+      "post": {
+        "tags": [
+          "arena"
+        ],
+        "summary": "Запустить на примерах (не засчитывается)",
+        "operationId": "run_api_v1_arena_rounds__round_id__run_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "round_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Round Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodeIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Run Api V1 Arena Rounds  Round Id  Run Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/arena/rounds/{round_id}/submit": {
+      "post": {
+        "tags": [
+          "arena"
+        ],
+        "summary": "Отправить решение на проверку",
+        "operationId": "submit_api_v1_arena_rounds__round_id__submit_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "round_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Round Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Submit Api V1 Arena Rounds  Round Id  Submit Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/arena/rounds/{round_id}/finish": {
+      "post": {
+        "tags": [
+          "arena"
+        ],
+        "summary": "Завершить участие досрочно и получить рейтинг",
+        "operationId": "finish_api_v1_arena_rounds__round_id__finish_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "round_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Round Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Finish Api V1 Arena Rounds  Round Id  Finish Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/arena/submissions/{submission_id}": {
+      "get": {
+        "tags": [
+          "arena"
+        ],
+        "summary": "Отправка и её разбор",
+        "operationId": "submission_api_v1_arena_submissions__submission_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "submission_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Submission Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Submission Api V1 Arena Submissions  Submission Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/arena/me": {
+      "get": {
+        "tags": [
+          "arena"
+        ],
+        "summary": "Мой рейтинг Arena и история",
+        "operationId": "me_api_v1_arena_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Me Api V1 Arena Me Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/arena/me/settings": {
+      "put": {
+        "tags": [
+          "arena"
+        ],
+        "summary": "Показывать имя и решения в Arena",
+        "operationId": "settings_api_v1_arena_me_settings_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArenaSettingsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Settings Api V1 Arena Me Settings Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/arena/top": {
+      "get": {
+        "tags": [
+          "arena"
+        ],
+        "summary": "Витрина: кандидаты по рейтингу Arena",
+        "operationId": "top_api_v1_arena_top_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "specialization",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Specialization"
+            }
+          },
+          {
+            "name": "grade",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grade"
+            }
+          },
+          {
+            "name": "has_fsp",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Has Fsp"
+            }
+          },
+          {
+            "name": "min_rating",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 4000,
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Rating"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Top Api V1 Arena Top Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/arena/candidates/{profile_id}": {
+      "get": {
+        "tags": [
+          "arena"
+        ],
+        "summary": "Arena-профиль кандидата: рейтинг, история, решения",
+        "operationId": "candidate_arena_api_v1_arena_candidates__profile_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "profile_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Profile Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Candidate Arena Api V1 Arena Candidates  Profile Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -2629,6 +3461,19 @@
         },
         "type": "object",
         "title": "ApplyRequest"
+      },
+      "ArenaSettingsIn": {
+        "properties": {
+          "show_arena": {
+            "type": "boolean",
+            "title": "Show Arena"
+          }
+        },
+        "type": "object",
+        "required": [
+          "show_arena"
+        ],
+        "title": "ArenaSettingsIn"
       },
       "Body_upload_avatar_api_v1_auth_me_avatar_post": {
         "properties": {
@@ -3325,6 +4170,37 @@
         ],
         "title": "ChallengeIn"
       },
+      "CodeIn": {
+        "properties": {
+          "problem": {
+            "type": "string",
+            "maxLength": 48,
+            "minLength": 1,
+            "title": "Problem"
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "python",
+              "javascript"
+            ],
+            "title": "Language",
+            "default": "python"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 65536,
+            "minLength": 1,
+            "title": "Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "problem",
+          "code"
+        ],
+        "title": "CodeIn"
+      },
       "CompanyIn": {
         "properties": {
           "name": {
@@ -3821,6 +4697,79 @@
         ],
         "title": "ResumeParseResult"
       },
+      "RoundIn": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 3,
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "specialization": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Specialization"
+          },
+          "problems": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Problems"
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Starts At"
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "maximum": 240.0,
+            "minimum": 15.0,
+            "title": "Duration Minutes",
+            "default": 60
+          },
+          "prize": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prize"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "problems",
+          "starts_at"
+        ],
+        "title": "RoundIn"
+      },
       "StartRequest": {
         "properties": {
           "grade": {
@@ -3851,6 +4800,44 @@
           "status"
         ],
         "title": "StatusIn"
+      },
+      "SubmitIn": {
+        "properties": {
+          "problem": {
+            "type": "string",
+            "maxLength": 48,
+            "minLength": 1,
+            "title": "Problem"
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "python",
+              "javascript"
+            ],
+            "title": "Language",
+            "default": "python"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 65536,
+            "minLength": 1,
+            "title": "Code"
+          },
+          "signals": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Signals"
+          }
+        },
+        "type": "object",
+        "required": [
+          "problem",
+          "code"
+        ],
+        "title": "SubmitIn"
       },
       "SubmitRequest": {
         "properties": {
