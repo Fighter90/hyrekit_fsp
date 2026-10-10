@@ -67,7 +67,8 @@ def fsp_summary(profile: CandidateProfile) -> dict[str, Any] | None:
     if not profile.fsp_snapshot:
         return None
     summary = summarize(profile.fsp_snapshot, profile.specialization)
-    return {**summary, 'verified': bool(profile.fsp_sub)} if summary else None
+    # Методика (scripts/validate.py) передаёт облегчённые профили без fsp_sub
+    return {**summary, 'verified': bool(getattr(profile, 'fsp_sub', None))} if summary else None
 
 
 def test_component(profile: CandidateProfile) -> float:
