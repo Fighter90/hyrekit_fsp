@@ -6,7 +6,7 @@ export default function Footer() {
     <footer className="footer">
       <div className="container footer__inner">
         <div className="footer__brand">
-          <Logo />
+          <Logo plain />
           <p className="footer__tag">Платформа подбора при поддержке ФСП</p>
         </div>
         <nav className="footer__nav" aria-label="Документы">
@@ -15,7 +15,7 @@ export default function Footer() {
           <a href="/#faq">Вопросы и ответы</a>
         </nav>
         <div className="footer__meta">
-          <img src="/brand/fsp-logo-short-dark.svg" alt="Федерация спортивного программирования" height={28} />
+          <img className="footer__fsp" src="/brand/fsp-logo-ru-full-dark.svg" alt="Федерация спортивного программирования России" height={34} />
           <span>© {new Date().getFullYear()} hyrekit.ru</span>
         </div>
       </div>

@@ -57,7 +57,7 @@ export default function AppLayout() {
       <div className="bg-grid bg-grid--faint" aria-hidden />
       <aside className={`sidebar ${open ? 'is-open' : ''}`}>
         <div className="sidebar__top">
-          <Logo to="/app/dashboard" />
+          <Logo to="/app/dashboard" short />
           <button className="icon-btn sidebar__close" onClick={() => setOpen(false)} aria-label="Закрыть меню">
             <X size={18} />
           </button>
@@ -92,9 +92,6 @@ export default function AppLayout() {
             <LogOut size={18} aria-hidden />
             <span>Выйти</span>
           </button>
-          <p className="sidebar__fsp">
-            <img src="/brand/fsp-star-dark.svg" alt="" width={14} height={13} /> при поддержке ФСП
-          </p>
         </div>
       </aside>
       {open && <div className="sidebar-scrim" onClick={() => setOpen(false)} aria-hidden />}
@@ -104,7 +101,7 @@ export default function AppLayout() {
           <button className="icon-btn" onClick={() => setOpen(true)} aria-label="Открыть меню">
             <Menu size={20} />
           </button>
-          <Logo to="/app/dashboard" />
+          <Logo to="/app/dashboard" short />
           <span className="avatar avatar--sm">{initials}</span>
         </header>
         {!user.is_verified && <VerifyBanner />}

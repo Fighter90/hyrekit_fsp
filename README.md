@@ -126,7 +126,7 @@ docker compose up -d --build
 
 ## Визуальная система
 
-Интерфейс в фирменном стиле ФСП: графитовая основа, синий `#402FFF` и красный `#EC1D35`, шрифты JetBrains Mono и TDAText. Токены и правила — [DESIGN.md](DESIGN.md).
+Интерфейс в фирменном стиле ФСП: официальный кириллический логотип федерации в связке с HyreKit, графитовая основа, синий `#402FFF` и красный `#EC1D35`, шрифты JetBrains Mono и TDAText. Токены и правила — [DESIGN.md](DESIGN.md).
 
 | Лендинг | Подборка работодателя |
 | --- | --- |
@@ -211,6 +211,7 @@ ruff check src tests scripts && ruff format --check src tests scripts   # лин
 pytest --cov=app                                                         # тесты бэкенда с покрытием
 PYTHONPATH=src python scripts/validate.py                                # валидация методики
 cd frontend && npm run lint && npm run build && npm test                 # фронтенд
+python scripts/smoke.py                                                  # дымовая проверка поднятого стенда
 docker compose logs -f app                                               # логи API
 ```
 
@@ -254,7 +255,7 @@ flowchart TB
 │   └── main.py
 ├── frontend/           # React SPA: лендинг, кабинеты кандидата и работодателя
 ├── tests/              # pytest: сквозной сценарий, методика, ядро
-├── scripts/            # dev.sh, validate.py
+├── scripts/            # dev.sh, validate.py, smoke.py
 ├── alembic/            # миграции
 ├── deploy/yc/          # площадка Yandex Cloud: compose, Caddy
 ├── docs/
@@ -292,6 +293,7 @@ flowchart TB
 | Сквозной сценарий | `tests/test_flow.py`: регистрация → опрос → тест → категория → подборка → приглашение → контакты |
 | Методика | `tests/test_method/`: каждое семейство на всех уровнях, монотонность θ, правила грейда, подбор, ФСП |
 | Фронтенд | vitest, 21 тест; ESLint; сборка TypeScript |
+| Стенд | `scripts/smoke.py` против поднятого `docker compose`: 28 шагов от регистрации с письмом до раскрытия контактов, отклика и короткого задания |
 | Валидация | `scripts/validate.py`: равная сложность, утечка, повторяемость, дискриминативность, точность грейда, precision@10 и nDCG@10 против базовых способов |
 
 Ключевые результаты валидации:

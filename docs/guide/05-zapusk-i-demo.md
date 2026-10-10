@@ -26,6 +26,8 @@ curl -s http://localhost:8000/health        # {"status":"ok",...}
 docker compose ps                           # app, db, redis, mailpit, frontend — healthy / running
 ```
 
+Полная проверка стенда одной командой — `python scripts/smoke.py` (нужен `httpx` из `requirements.txt`): 28 шагов сквозного сценария через живой API, включая письмо в Mailpit; для удалённого стенда — `--base https://hyrekit.ru --no-mail`.
+
 Остановка: `docker compose down`; с удалением данных — `docker compose down -v`.
 
 ## Вариант 2. Локально без Docker и PostgreSQL

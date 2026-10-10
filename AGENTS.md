@@ -18,6 +18,7 @@ pytest --cov=app                                 # бэкенд, порог по
 PYTHONPATH=src python scripts/validate.py        # валидация методики → docs/validation/results.md
 cd frontend && npm run lint && npm run build && npm test
 docker compose up -d --build                     # весь стек: app, db, redis, mailpit, frontend
+python scripts/smoke.py                          # дымовая проверка поднятого стенда
 ```
 
 ## Правила
