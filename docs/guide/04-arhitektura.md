@@ -152,25 +152,34 @@ sequenceDiagram
 
 `MockFspProvider` детерминирован по ФСП ID формата `FSP-NNNN…`: один и тот же ID всегда даёт одну историю, а ID, оканчивающийся на 0, моделирует участника без истории. Ответ сохраняется снимком в профиле, поэтому подборка не зависит от доступности реестра.
 
-### Целевая схема с ФСП ID на Keycloak
+### Вход и привязка через ФСП ID (OpenID Connect)
+
+Ручной ввод ФСП ID не доказывает, что идентификатор принадлежит кандидату. Поэтому HyreKit — клиент OpenID Connect: кандидат входит у провайдера ФСП ID, и только после этого ФСП ID получает отметку «подтверждён ФСП ID». Поток — Authorization Code + PKCE (S256), код обменивает бэкенд как конфиденциальный клиент.
 
 ```mermaid
 sequenceDiagram
-  participant K as Кандидат
-  participant H as HyreKit
-  participant KC as Keycloak ФСП
-  participant R as API реестра ФСП
-  K->>H: «Войти через ФСП ID»
-  H->>KC: OIDC Authorization Code + PKCE (scope: openid profile fsp:achievements)
-  KC-->>K: страница входа ФСП
-  K->>KC: логин и согласие на передачу достижений
-  KC-->>H: code → id_token (sub = ФСП ID) + access_token
-  H->>R: GET /athletes/{sub}/achievements (Bearer access_token)
-  R-->>H: достижения
-  H->>H: привязка sub к профилю, снимок, пересчёт рейтинга
+  participant K as Кандидат (браузер)
+  participant H as HyreKit API
+  participant P as Провайдер ФСП ID
+  K->>H: POST /auth/fsp/start {mode}
+  H->>P: discovery (кэш на час)
+  H-->>K: authorize_url + cookie fsp_oidc (state, nonce, PKCE)
+  K->>P: страница входа ФСП ID
+  K->>P: логин и согласие на передачу данных
+  P-->>K: redirect /fsp-callback?code&state
+  K->>H: POST /auth/fsp/callback {code, state}
+  H->>H: сверка state с cookie
+  H->>P: POST /token (code, code_verifier, client_secret)
+  P-->>H: id_token + access_token
+  H->>H: проверка подписи, iss, aud, exp, nonce
+  H->>P: GET /userinfo (sub совпадает)
+  H->>H: sub → профиль, снимок достижений через FspProvider
+  H-->>K: токены HyreKit (вход) или подтверждённая привязка
 ```
 
-Замена эмулятора — реализация того же протокола `FspProvider.fetch` поверх HTTP-клиента; остальной код не меняется. Вход через Keycloak добавляется как второй способ аутентификации: HyreKit выпускает свои JWT после проверки `id_token`, поэтому кабинеты и роли не меняются. Обновление достижений — периодически или по вебхуку реестра.
+Состояние потока (`state`, `nonce`, `code_verifier`) хранится в подписанной HttpOnly-cookie на 10 минут, поэтому вход работает на любом числе экземпляров API. Один участник ФСП (`sub` провайдера) подтверждается не более чем в одном профиле; вход ищет профиль по `sub`, затем кандидата с подтверждённой провайдером почтой, иначе создаёт нового подтверждённого кандидата. HyreKit выпускает свои JWT, поэтому кабинеты и роли не меняются.
+
+Провайдер задаётся переменными `FSP_OIDC_*`. Keycloak ФСП в рамках хакатона недоступен, поэтому приложение поднимает встроенный тестовый провайдер по тому же протоколу (`/api/v1/fsp-id`: discovery, страница входа, token, userinfo). Клиент ходит к нему по HTTP так же, как ходил бы к Keycloak, и проверяет `id_token` той же функцией: HS256 подписью секрета клиента у тестового провайдера, RS256 и ES256 ключами из `jwks_uri` у Keycloak. Подключение Keycloak — `FSP_OIDC_ISSUER`, `FSP_OIDC_CLIENT_ID`, `FSP_OIDC_CLIENT_SECRET`, без изменений кода. Достижения по-прежнему даёт `FspProvider`; когда появится API реестра, его реализация получит access-токен из того же входа.
 
 ## Масштабирование
 

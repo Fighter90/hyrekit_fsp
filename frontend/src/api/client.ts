@@ -48,6 +48,9 @@ import type {
   ResumeParseResult,
   SurveyInput,
   TokenPair,
+  FspConfig,
+  FspFlowMode,
+  FspCallbackResult,
   User,
   Vacancy,
   VacancyAssessment,
@@ -233,6 +236,16 @@ export class ApiClient {
   }
   login(email: string, password: string) {
     return this.request<TokenPair>('POST', '/auth/login', { body: { email, password } })
+  }
+  /** Вход и привязка через ФСП ID (OIDC): настройки, старт, завершение после возврата от провайдера */
+  fspConfig() {
+    return this.request<FspConfig>('GET', '/auth/fsp/config')
+  }
+  fspStart(mode: FspFlowMode) {
+    return this.request<{ authorize_url: string }>('POST', '/auth/fsp/start', { body: { mode } })
+  }
+  fspCallback(code: string, state: string) {
+    return this.request<FspCallbackResult>('POST', '/auth/fsp/callback', { body: { code, state } })
   }
   refresh(refreshToken: string) {
     return this.request<TokenPair>('POST', '/auth/refresh', { body: { refresh_token: refreshToken } })

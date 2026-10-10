@@ -13,6 +13,7 @@ import type { Role } from './api/types'
 // Кабинеты грузятся лениво — лендинг остаётся лёгким
 const AppLayout = lazyPage(() => import('./components/layout/AppLayout'))
 const ExpressPage = lazyPage(() => import('./pages/auth/ExpressPage'))
+const FspCallbackPage = lazyPage(() => import('./pages/auth/FspCallbackPage'))
 const EmailVerifyPage = lazyPage(() => import('./pages/auth/EmailVerifyPage'))
 const PrivacyPage = lazyPage(() => import('./pages/public/PrivacyPage'))
 const TermsPage = lazyPage(() => import('./pages/public/TermsPage'))
@@ -89,6 +90,7 @@ export default function App() {
           <Route element={<CenteredLayout />}>
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/express" element={<ExpressPage />} />
+            <Route path="/fsp-callback" element={<FspCallbackPage />} />
             <Route path="/verify/:token" element={<EmailVerifyPage />} />
             <Route path="/email-verify" element={<EmailVerifyPage />} />
           </Route>

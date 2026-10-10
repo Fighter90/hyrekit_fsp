@@ -59,6 +59,17 @@ class Settings(BaseSettings):
     public_url: str = 'http://localhost:3000'  # адрес фронтенда для ссылок в письмах
     docs_enabled: bool = True  # Swagger UI и /openapi.json (ТЗ 3.5: API описан через OpenAPI)
 
+    # --- ФСП ID (OIDC, FSP-20) ---
+    # Пустой issuer — встроенный тестовый провайдер ФСП ID по адресу {public_url}/api/v1/fsp-id.
+    # Для Keycloak ФСП: FSP_OIDC_ISSUER=https://id.fsp-russia.com/realms/fsp, client_id и secret.
+    fsp_oidc_issuer: str = ''
+    fsp_oidc_client_id: str = 'hyrekit'
+    fsp_oidc_client_secret: str = ''  # для тестового провайдера выводится из secret_key
+    fsp_oidc_scope: str = 'openid profile email'
+    fsp_oidc_id_claim: str = 'fsp_id'  # claim с ФСП ID; без него берётся preferred_username
+    fsp_oidc_backchannel_url: str = ''  # внутренний адрес провайдера для token/jwks/userinfo
+    fsp_oidc_mock: bool = True  # встроенный тестовый провайдер ФСП ID
+
     # --- Почта (подтверждение адреса) ---
     smtp_host: str = ''  # пусто — письмо не отправляется, ссылка пишется в лог
     smtp_port: int = 1025

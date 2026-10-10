@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Shield, Trophy, Link2, Unlink, FileCheck2 } from 'lucide-react'
 import { api } from '../../api/client'
 import type { CandidateProfile, CandidateSettingsUpdate, FspSummary, Privacy } from '../../api/types'
@@ -12,6 +12,7 @@ import { ErrorState } from '../../components/ui/States'
 import { SkeletonCard } from '../../components/ui/Skeleton'
 import SecuritySection from '../../components/settings/SecuritySection'
 import FspPanel from '../../components/settings/FspPanel'
+import FspIdButton from '../../components/settings/FspIdButton'
 import { errorMessage, formatDateTime } from '../../lib/format'
 
 const PRIVACY_LABELS: { key: keyof Privacy; label: string; hint: string }[] = [
@@ -23,6 +24,15 @@ const PRIVACY_LABELS: { key: keyof Privacy; label: string; hint: string }[] = [
 
 export default function CandidateSettingsPage() {
   const { data, error, loading, reload, setData } = useAsync(() => api.getCandidateProfile())
+  const location = useLocation()
+  const navigate = useNavigate()
+  const toast = useToast()
+  const linked = (location.state as { fspLinked?: string } | null)?.fspLinked
+  useEffect(() => {
+    if (!linked) return
+    toast.success(`ФСП ID ${linked} подтверждён`)
+    navigate(location.pathname, { replace: true, state: null }) // не повторять уведомление при обновлении
+  }, [linked, toast, navigate, location.pathname])
   return (
     <>
       <PageHeader title="Настройки" subtitle="Приватность, согласие на обработку данных, ФСП ID и безопасность." />
@@ -174,6 +184,9 @@ function FspSection({ profile, onChange }: SectionProps) {
             <Button variant="secondary" loading={loadingFsp} onClick={refresh}>Загрузить достижения</Button>
           )}
           <div className="row end gap-sm wrap">
+            {!summary?.verified && (
+              <FspIdButton mode="link" size="sm" label="Подтвердить через ФСП ID" onError={toast.error} />
+            )}
             <Button variant="ghost" size="sm" loading={loadingFsp} onClick={refresh}>Обновить</Button>
             <Button variant="danger" size="sm" icon={<Unlink size={14} />} loading={busy} onClick={unlink}>Отвязать ФСП ID</Button>
           </div>
@@ -183,7 +196,11 @@ function FspSection({ profile, onChange }: SectionProps) {
           <p className="muted small">
             Укажите идентификатор спортсмена Федерации спортивного программирования — участие и призовые места подтянутся
             автоматически и повысят рейтинг. Нет истории? Ничего страшного — рейтинг считается по тесту.
+            Вход через ФСП ID подтверждает, что идентификатор ваш: работодатель видит отметку «подтверждён».
           </p>
+          <div>
+            <FspIdButton mode="link" variant="primary" onError={toast.error} />
+          </div>
           <div className="row gap-sm wrap">
             <input className="input grow" style={{ maxWidth: 320 }} placeholder="ФСП ID, например FSP-123456" value={fspId} onChange={(e) => setFspId(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && link()} aria-label="ФСП ID" />
             <Button icon={<Link2 size={16} />} loading={busy} disabled={!fspId.trim()} onClick={link}>Привязать</Button>

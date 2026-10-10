@@ -849,7 +849,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/StartRequest"
+                "$ref": "#/components/schemas/app__candidates__router__StartRequest"
               }
             }
           },
@@ -3398,6 +3398,396 @@
         }
       }
     },
+    "/api/v1/auth/fsp/config": {
+      "get": {
+        "tags": [
+          "ФСП ID"
+        ],
+        "summary": "Доступен ли вход через ФСП ID",
+        "operationId": "config_api_v1_auth_fsp_config_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/fsp/start": {
+      "post": {
+        "tags": [
+          "ФСП ID"
+        ],
+        "summary": "Начать вход или привязку через ФСП ID",
+        "operationId": "start_api_v1_auth_fsp_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__fsp__router__StartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/fsp/callback": {
+      "post": {
+        "tags": [
+          "ФСП ID"
+        ],
+        "summary": "Завершить вход или привязку через ФСП ID",
+        "operationId": "callback_api_v1_auth_fsp_callback_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CallbackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallbackResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/fsp-id/.well-known/openid-configuration": {
+      "get": {
+        "tags": [
+          "Тестовый провайдер ФСП ID"
+        ],
+        "summary": "OIDC discovery",
+        "operationId": "discovery_api_v1_fsp_id__well_known_openid_configuration_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Discovery Api V1 Fsp Id  Well Known Openid Configuration Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fsp-id/jwks": {
+      "get": {
+        "tags": [
+          "Тестовый провайдер ФСП ID"
+        ],
+        "summary": "Ключи подписи (у тестового провайдера HS256, публичных ключей нет)",
+        "operationId": "jwks_api_v1_fsp_id_jwks_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Jwks Api V1 Fsp Id Jwks Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fsp-id/authorize": {
+      "get": {
+        "tags": [
+          "Тестовый провайдер ФСП ID"
+        ],
+        "summary": "Страница входа ФСП ID",
+        "operationId": "authorize_api_v1_fsp_id_authorize_get",
+        "parameters": [
+          {
+            "name": "client_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Client Id"
+            }
+          },
+          {
+            "name": "redirect_uri",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Redirect Uri"
+            }
+          },
+          {
+            "name": "response_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "code",
+              "title": "Response Type"
+            }
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "openid",
+              "title": "Scope"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "State"
+            }
+          },
+          {
+            "name": "nonce",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Nonce"
+            }
+          },
+          {
+            "name": "code_challenge",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Code Challenge"
+            }
+          },
+          {
+            "name": "code_challenge_method",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Code Challenge Method"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Тестовый провайдер ФСП ID"
+        ],
+        "summary": "Вход и согласие на передачу данных",
+        "operationId": "authorize_submit_api_v1_fsp_id_authorize_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_authorize_submit_api_v1_fsp_id_authorize_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Authorize Submit Api V1 Fsp Id Authorize Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fsp-id/token": {
+      "post": {
+        "tags": [
+          "Тестовый провайдер ФСП ID"
+        ],
+        "summary": "Обмен кода на токены (Authorization Code + PKCE)",
+        "operationId": "token_api_v1_fsp_id_token_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_token_api_v1_fsp_id_token_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fsp-id/userinfo": {
+      "get": {
+        "tags": [
+          "Тестовый провайдер ФСП ID"
+        ],
+        "summary": "Данные участника по access-токену",
+        "operationId": "userinfo_api_v1_fsp_id_userinfo_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Userinfo Api V1 Fsp Id Userinfo Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -3475,6 +3865,119 @@
         ],
         "title": "ArenaSettingsIn"
       },
+      "Body_authorize_submit_api_v1_fsp_id_authorize_post": {
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "title": "Client Id"
+          },
+          "redirect_uri": {
+            "type": "string",
+            "title": "Redirect Uri"
+          },
+          "code_challenge": {
+            "type": "string",
+            "title": "Code Challenge"
+          },
+          "response_type": {
+            "type": "string",
+            "title": "Response Type",
+            "default": "code"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "default": "openid"
+          },
+          "state": {
+            "type": "string",
+            "title": "State",
+            "default": ""
+          },
+          "nonce": {
+            "type": "string",
+            "title": "Nonce",
+            "default": ""
+          },
+          "code_challenge_method": {
+            "type": "string",
+            "title": "Code Challenge Method",
+            "default": "S256"
+          },
+          "fsp_id": {
+            "type": "string",
+            "title": "Fsp Id",
+            "default": ""
+          },
+          "password": {
+            "type": "string",
+            "title": "Password",
+            "default": ""
+          },
+          "action": {
+            "type": "string",
+            "title": "Action",
+            "default": "allow"
+          }
+        },
+        "type": "object",
+        "required": [
+          "client_id",
+          "redirect_uri",
+          "code_challenge"
+        ],
+        "title": "Body_authorize_submit_api_v1_fsp_id_authorize_post"
+      },
+      "Body_token_api_v1_fsp_id_token_post": {
+        "properties": {
+          "grant_type": {
+            "type": "string",
+            "title": "Grant Type"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "redirect_uri": {
+            "type": "string",
+            "title": "Redirect Uri"
+          },
+          "code_verifier": {
+            "type": "string",
+            "title": "Code Verifier"
+          },
+          "client_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Id"
+          },
+          "secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Secret"
+          }
+        },
+        "type": "object",
+        "required": [
+          "grant_type",
+          "code",
+          "redirect_uri",
+          "code_verifier"
+        ],
+        "title": "Body_token_api_v1_fsp_id_token_post"
+      },
       "Body_upload_avatar_api_v1_auth_me_avatar_post": {
         "properties": {
           "file": {
@@ -3502,6 +4005,65 @@
           "file"
         ],
         "title": "Body_upload_resume_api_v1_candidate_profile_resume_post"
+      },
+      "CallbackRequest": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 4096,
+            "minLength": 1,
+            "title": "Code"
+          },
+          "state": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "State"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "state"
+        ],
+        "title": "CallbackRequest"
+      },
+      "CallbackResponse": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "login",
+              "link"
+            ],
+            "title": "Mode"
+          },
+          "fsp_id": {
+            "type": "string",
+            "title": "Fsp Id"
+          },
+          "created": {
+            "type": "boolean",
+            "title": "Created",
+            "default": false
+          },
+          "tokens": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TokenResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "mode",
+          "fsp_id"
+        ],
+        "title": "CallbackResponse"
       },
       "CandidateProfileOut": {
         "properties": {
@@ -4287,6 +4849,24 @@
         ],
         "title": "CompanyIn"
       },
+      "ConfigResponse": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "test_provider": {
+            "type": "boolean",
+            "title": "Test Provider"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled",
+          "test_provider"
+        ],
+        "title": "ConfigResponse"
+      },
       "DeleteAccountRequest": {
         "properties": {
           "password": {
@@ -4430,6 +5010,11 @@
           "has_history": {
             "type": "boolean",
             "title": "Has History"
+          },
+          "verified": {
+            "type": "boolean",
+            "title": "Verified",
+            "default": false
           }
         },
         "type": "object",
@@ -4770,18 +5355,18 @@
         ],
         "title": "RoundIn"
       },
-      "StartRequest": {
+      "StartResponse": {
         "properties": {
-          "grade": {
+          "authorize_url": {
             "type": "string",
-            "title": "Grade"
+            "title": "Authorize Url"
           }
         },
         "type": "object",
         "required": [
-          "grade"
+          "authorize_url"
         ],
-        "title": "StartRequest"
+        "title": "StartResponse"
       },
       "StatusIn": {
         "properties": {
@@ -5228,6 +5813,34 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "app__candidates__router__StartRequest": {
+        "properties": {
+          "grade": {
+            "type": "string",
+            "title": "Grade"
+          }
+        },
+        "type": "object",
+        "required": [
+          "grade"
+        ],
+        "title": "StartRequest"
+      },
+      "app__fsp__router__StartRequest": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "login",
+              "link"
+            ],
+            "title": "Mode",
+            "default": "login"
+          }
+        },
+        "type": "object",
+        "title": "StartRequest"
       }
     },
     "securitySchemes": {
