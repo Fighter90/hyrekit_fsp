@@ -1,0 +1,40 @@
+# Резервная площадка HyreKit на TimeWeb: образы собираются на ВМ из исходников.
+name: hyrekit
+services:
+  app:
+    build: { context: ../.., dockerfile: Dockerfile }
+    image: hyrekit-app:local
+    env_file: .env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://hyrekit:${POSTGRES_PASSWORD}@db:5432/hyrekit
+      - REDIS_URL=redis://redis:6379/0
+      - UPLOAD_DIR=/data/uploads
+    volumes: [upload_data:/data/uploads]
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    restart: unless-stopped
+  db:
+    image: mirror.gcr.io/library/postgres:16-alpine
+    environment: { POSTGRES_DB: hyrekit, POSTGRES_USER: hyrekit, POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}" }
+    command: postgres -c shared_buffers=64MB -c max_connections=40
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U hyrekit -d hyrekit"], interval: 10s, retries: 5 }
+    restart: unless-stopped
+  redis:
+    image: mirror.gcr.io/library/redis:7-alpine
+    command: redis-server --maxmemory 64mb --maxmemory-policy allkeys-lru
+    healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 10s, retries: 5 }
+    restart: unless-stopped
+  frontend:
+    build: { context: ../.., dockerfile: deploy/timeweb/Dockerfile.frontend }
+    image: hyrekit-frontend:local
+    depends_on: [app]
+    restart: unless-stopped
+  caddy:
+    image: mirror.gcr.io/library/caddy:2.8-alpine
+    ports: ["80:80", "443:443"]
+    volumes: [./Caddyfile:/etc/caddy/Caddyfile:ro, caddy_data:/data]
+    depends_on: [frontend]
+    restart: unless-stopped
+volumes: { postgres_data: {}, upload_data: {}, caddy_data: {} }
