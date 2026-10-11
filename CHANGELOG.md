@@ -5,6 +5,7 @@
 ## [Unreleased]
 
 ### Добавлено
+- Резервная площадка на TimeWeb (`deploy/timeweb/`): сборка образов на ВМ без реестра Яндекса, подкачка для 1 ГБ памяти, Caddy с HTTPS на https://83-217-223-211.sslip.io.
 - Настройка OpenCode: `opencode.json` (инструкции, MCP Linear, GitHub и Playwright, разрешения), агенты `@spec` и `@review`, команды `/task`, `/check`, `/docs`, `/e2e` в `.opencode/`, инструкция подключения `docs/opencode.md`.
 - Версия сборки в левом нижнем углу (`HyreKit v0.1.0 · <коммит>`, при наведении — время сборки): на публичных страницах закреплённая подпись, в кабинете — строка внизу боковой панели. Коммит подставляется при сборке; в Docker — аргументом `APP_COMMIT`, `deploy/yc/deploy.sh` передаёт тег выкатки.
 - Демо-видео `docs/presentation/HyreKit_demo.mp4` (3 минуты, титры) и скрипт записи `docs/presentation/source/video/` (FSP-58).

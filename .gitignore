@@ -328,3 +328,7 @@ frontend/coverage/
 
 # локальные данные Claude Code
 .claude/
+deploy/timeweb/extra.env
+frontend/dist-prebuilt/
+deploy/timeweb/secrets.env
+deploy/timeweb/.env
